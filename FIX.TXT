@@ -1,0 +1,43 @@
+Version 70h
+-----------
+  þ Updated V2MAIL.EXE
+  þ Added Multi-Node Chat
+  þ Added Multi-Node Private Messages
+  þ Fixed some of the things posted on TruamaNET
+  þ Auto-Signatures are automatically appeneded to messages now
+  * Run NUKE_SIG to reset all auto-signatures
+  þ SysOp's can access private files in xfer's..
+  þ When unzipping QWK Packets, and there where already existing files
+    PKZIP would stop asking 'overwite????', locking up the board... arg..
+
+Version 70g
+-----------
+  þ Updated FIXLINES.EXE (used with Config Listings ANSI's)
+  þ When creating File Areas you can insert the area wherever you want it
+  þ E-Mail Announcements now work fine..
+  þ Avatar in Full Screen Editor was sometimes setting color to black
+  þ Users can now edit files they uploaded
+  þ File Descriptions are asked for after the upload if user does not
+    enter description before hand..
+  þ Added more configrability with the Top-Five listings.. see MCICODES.TXT
+  þ Added One-Liners in Login (if wanted)
+  þ Pauses after display login status screen
+  * Run the CONFIG Converter called FIXCFG.EXE
+  þ File AREA Listings are now faster.. # of files will be a bit screwy at
+    first.. just enter each base and it will fix itself..
+  þ Added two new command lines if using front end mailers
+      /X - Will exit V/2 if no carrier detected (form: VISION /19200 /X)
+      /N - Will invoke Internal V/2Net-Mail (To Send) automatically
+  þ File NewScan Configuration is fixed
+  ** Run CONVERT.EXE to Convert Users.. anyone under version .70g **
+  þ Added Auto-Signatures!! (Command is 'U' from Main Menu)
+  þ From any menu prompt /MEM - Returns Free Memory, /VER - Returns Version
+  þ Updated Credits, ('^' from Main Menu)
+  þ Fixed small bug is Quoting (would lock up in rare cases)
+  þ Added /F switch to V2MAIL.EXE which turns on Bar Color Filter
+  þ Added a choice between FOSSIL or Internal Modem Routines (a few people
+    were having problems with the Internal stuff and if you are one of them,
+    then switch to Fossil and tell me how it works..)
+  þ Cosmetic things here and there..
+  þ You should notice smoother/faster ANSI display.. a significant speed
+    increase...

@@ -1,0 +1,28 @@
+Emulation Doc's
+Written By: Nocturnus
+For ViSiON/2 .84 THE REVision
+
+  ViSiON/2 has the ability to support mutiple menus.  To do this, you must
+run EMULATE.EXE.  EMULATE.EXE is simple to use, so the doc file will be
+short.  The commands are, PAGE UP and PAGE DOWN are used in the usual manner,
+ESC quit's and saves the emulation setup,  F10 exit's and doesn't save and F5
+will add a new menu.  Now lets say you are looking at the current menu, which
+is default, you see:
+
+Emulation Name:  The name of the current emulation, can be the persion who
+                  made the menu set.
+Text Directory:  The directory to where the menus are stored.  Must be
+                  different then any other menu dir. ie: c:\vision\menu2
+Use Arrow Keys:  If yes, this menu set allows the use of cursor keys in the
+                  message and file bases.
+Min. Level    :  This is the lowest level allowed to use this menu.
+Max. Level    :  This is the highest level allowed to use this menu.
+Access Flags  :  If the users access flags are equal to what the user has set
+                  for his access flags, they can use this menu, if not they
+                  will not be able to access it.
+Access Number :  This is used respectbaly.  If you add another emulation and
+                  you currently have only one emulation set up, the next one
+                  you add will be 2.
+
+  Thats all for the Emulation Doc's
+

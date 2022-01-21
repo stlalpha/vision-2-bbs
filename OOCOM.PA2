@@ -1,0 +1,1084 @@
+  {--- Line Status ---}
+  function AbstractPort.GetLineControl : Byte;
+    {-Return the line control byte from the port record}
+  begin
+    GetLineControl := PR^.LineControl;
+  end;
+
+  function AbstractPort.GetLineStatus : Byte;
+    {-Return the line status byte from the port record}
+  var
+    ClearMask : Byte;
+  begin
+    with PR^ do begin
+      GetLineStatus := LineStatus;
+
+      {Clear the error and break bits}
+      ClearMask := OverrunErrorMask + ParityErrorMask +
+                   FramingErrorMask + BreakReceivedMask;
+      ClearMask := not ClearMask;
+      IntOff;
+      LineStatus := LineStatus and ClearMask;
+      IntOn;
+    end;
+  end;
+
+  function AbstractPort.CheckDataReady : Boolean;
+    {-Returns True if DR (Data Ready) is high}
+  begin
+    CheckDataReady := (GetLineStatus and DataReadyMask) = DataReadyMask;
+  end;
+
+  function AbstractPort.CheckLineError : Boolean;
+    {-Returns True if any error bits are set in line status register}
+  var
+    B : Byte;
+  begin
+    with PR^ do begin
+      B := OverrunErrorMask + ParityErrorMask + FramingErrorMask;
+      B := B and LineStatus;
+      if B = 0 then
+        CheckLineError := False
+      else
+        CheckLineError := True;
+    end;
+  end;
+
+  function AbstractPort.GetLineError : Word;
+    {-Returns line error type (here and in AsyncStatus; clears condition)}
+  var
+    LStatus : Byte;
+  begin
+    with PR^ do begin
+      LStatus := GetLineStatus;
+      if (LStatus and OverrunErrorMask) = OverrunErrorMask then
+        AsyncStatus := ecOverrunError
+      else if (LStatus and ParityErrorMask) = ParityErrorMask then
+        AsyncStatus := ecParityError
+      else if (LStatus and FramingErrorMask) = FramingErrorMask then
+        AsyncStatus := ecFramingError
+      else
+        AsyncStatus := ecOk;
+
+      {Show the error to the error handler}
+      if AsyncStatus <> ecOk then
+        GotError(epNonFatal + (AsyncStatus mod 10000));
+
+    end;
+    GetLineError := AsyncStatus;
+  end;
+
+  function AbstractPort.CheckLineBreak : Boolean;
+    {-Returns True if Break was received (and clears condition)}
+  begin
+    CheckLineBreak := PR^.BreakReceived;
+    PR^.BreakReceived := False;
+  end;
+
+  function AbstractPort.CheckTHRE : Boolean;
+    {-Returns True if transmitter holding register is empty}
+  begin
+    CheckTHRE := (GetLineStatus and THREMask) = THREMask;
+  end;
+
+  function AbstractPort.CheckTE : Boolean;
+    {-Returns True if transmitter is empty}
+  begin
+    CheckTE := (GetLineStatus and TEMask) = TEMask;
+  end;
+
+  function AbstractPort.CheckFifoError : Boolean;
+    {-Returns if Fifo error bit is set}
+  begin
+    CheckFifoError := (GetLineStatus and FifoErrorMask) = FifoErrorMask;
+  end;
+
+  {---- Miscellaneous ----}
+  function AbstractPort.GetComName : ComNameType;
+    {-Returns the ComName of this port}
+  begin
+    GetComName := PR^.PortName;
+  end;
+
+  function AbstractPort.GetBaseAddr : Word;
+    {-Returns the BaseAddr of this port (zero if NA)}
+  begin
+    GetBaseAddr := PR^.BaseAddr;
+  end;
+
+  procedure AbstractPort.SetErrorProc(EP : AsyncErrorProc);
+    {-Sets an error handler for ComPort P}
+  begin
+    with PR^ do begin
+      ErrorProc := EP;
+      ErrorData := @Self;
+    end;
+  end;
+
+  procedure AbstractPort.ptOptionsOn(OptionFlags : Word);
+    {-Activate multiple options}
+  begin
+    with PR^ do
+      Flags := Flags or (OptionFlags and not BadPortOptions);
+  end;
+
+  procedure AbstractPort.ptOptionsOff(OptionFlags : Word);
+    {-Deactivate multiple options}
+  begin
+    with PR^ do
+      Flags := Flags and not (OptionFlags and not BadPortOptions);
+  end;
+
+  function AbstractPort.ptOptionsAreOn(OptionFlags : Word) : Boolean;
+    {-Return True if all specified options are on}
+  begin
+    with PR^ do
+      ptOptionsAreOn := (Flags and OptionFlags = OptionFlags);
+  end;
+
+  procedure AbstractPort.WaitForChar(DelimSet : CharSet; var C : Char;
+                                     Timeout : Word);
+    {-Waits for char in DelimSet or Timeout}
+  var
+    ET : EventTimer;
+  begin
+    AsyncStatus := 0;
+    C := #255;
+
+    {If ignoring case, make sure DelimSet has both cases}
+    if FlagIsSet(PR^.Flags, ptIgnoreDelimCase) then
+      ptAllcaseCharSet(DelimSet);
+
+    NewTimer(ET, Timeout);
+    repeat
+      if CharReady then begin
+        GetChar(C);
+        WaitChar(@Self, C);
+      end;
+    until ptWaitComplete(ET) or (C in DelimSet);
+
+    {Report timeouts and user aborts only}
+    if ((AsyncStatus mod 10000) = ecTimeout) or
+       ((AsyncStatus mod 10000) = ecUserAbort) then
+      GotError(epNonFatal + (AsyncStatus mod 10000));
+  end;
+
+  procedure AbstractPort.WaitForString(S : String; Timeout : Word);
+    {-Waits for string S or Timeout}
+  var
+    ET : EventTimer;
+    C : Char;
+    Match : Boolean;
+    I : Byte;
+  label
+    ExitPoint;
+  begin
+    AsyncStatus := 0;
+
+    {If ignoring case, upcase the target string}
+    if FlagIsSet(PR^.Flags, ptIgnoreDelimCase) then
+      for I := 1 to Length(S) do
+        S[I] := Upcase(S[I]);
+
+    NewTimer(ET, Timeout);
+    repeat
+      {Look for the first character}
+      repeat
+        if CharReady then begin
+          GetChar(C);
+          WaitChar(@Self, C);
+        end;
+        if FlagIsSet(PR^.Flags, ptIgnoreDelimCase) then
+          C := Upcase(C);
+      until ptWaitComplete(ET) or (C = S[1]) or (AsyncStatus <> ecOk);
+
+      if AsyncStatus <> ecOk then
+        {Exit if we never got the first char}
+        goto ExitPoint
+      else begin
+        {Got first char, look for the rest}
+        Match := True;
+        I := 2;
+        while Match and (I <= Length(S)) do begin
+          GetCharTimeout(C, Timeout);
+          if AsyncStatus <> ecOk then
+            goto ExitPoint;
+          WaitChar(@Self, C);
+          if FlagIsSet(PR^.Flags, ptIgnoreDelimCase) then
+            C := Upcase(C);
+          if C <> S[I] then
+            Match := False
+          else
+            Inc(I);
+        end;
+
+        {Exit if we got a match (with AsyncStatus = ecOk)}
+        if Match then
+          Exit;
+      end;
+    until (AsyncStatus <> ecOk) or ptWaitComplete(ET);
+
+ExitPoint:
+    {Report timeouts and user aborts only}
+    if ((AsyncStatus mod 10000) = ecTimeout) or
+       ((AsyncStatus mod 10000) = ecUserAbort) then
+      GotError(epNonFatal + (AsyncStatus mod 10000));
+  end;
+
+  procedure AbstractPort.WaitForMultiString(SL : String; SepChar : Char;
+                                            var FoundS : String;
+                                            var FoundI : Byte;
+                                            Timeout : Word);
+    {-Waits for any substring in SL or Timeout}
+  const
+    MaxSubs = 128;
+  var
+    ET : EventTimer;
+    C : Char;
+    I : Byte;
+    SubCnt : Byte;
+    CurSub : Byte;
+    LastIndex : Byte;
+    Candidate : array[1..MaxSubs] of Boolean;
+    SubPos : array[1..MaxSubs] of Byte;
+    FirstChar : array[1..MaxSubs] of Char;
+
+    function MatchOneChar(MC : Char) : Boolean;
+      {-True if we have a full match of any substring}
+    var
+      I : Byte;
+      Index : Byte;
+      CurFound : Boolean;
+      SubIndex : Byte;
+    begin
+      Index := 1;
+      SubIndex := 1;
+      CurSub := 1;
+      CurFound := False;
+      MatchOneChar := False;
+      for I := 1 to Length(SL) do
+        if SL[I] = SepChar then begin
+          {End of substring}
+          if not CurFound then
+            {Last substring didn't match char, remove it as candidate}
+            Candidate[CurSub] := False
+          else if Candidate[CurSub] then begin
+            {Still a candidate -- prepare for next position}
+            if (SubPos[CurSub] = SubIndex-1) then begin
+              {Last substr was a "last char" match, set flag}
+              MatchOneChar := True;
+              LastIndex := CurSub;
+            end else
+              {Just bump position index}
+              Inc(SubPos[CurSub]);
+          end;
+
+          {Prepare for next substring}
+          Inc(CurSub);
+          SubIndex := 1;
+        end else begin
+          {In substring, wait for right Posn}
+          if SubIndex = SubPos[CurSub] then
+            {Found right position, compare chars}
+            if MC <> SL[I] then begin
+              {Failed match at SubPos for MC, remove this substr as candidate}
+              Candidate[CurSub] := False;
+              SubPos[CurSub] := 1;
+              {Now check it again for possible match at position 1}
+              if FirstChar[CurSub] = MC then begin
+                {It matches the first char -- say we're a candidate again}
+                Candidate[CurSub] := True;
+                CurFound := True;
+              end;
+            end else begin
+              {Match this pos and substr, still a candidate}
+              CurFound := True;
+              Candidate[CurSub] := True;
+              {Handle end-of-string condition}
+              if I = Length(SL) then begin
+                MatchOneChar := True;
+                LastIndex := CurSub;
+              end;
+            end;
+          Inc(SubIndex);
+        end;
+
+      {Handle candidate at end-of-string}
+      if not CurFound then
+        {Last substring didn't match char, remove it as candidate}
+        Candidate[CurSub] := False
+      else if Candidate[CurSub] then begin
+        {Still a candidate -- prepare for next position}
+        if (SubPos[CurSub] = SubIndex-1) then begin
+          {Last substr was a "last char" match, set flag}
+          MatchOneChar := True;
+          LastIndex := CurSub;
+        end else
+          {Just bump position index}
+          Inc(SubPos[CurSub]);
+      end;
+    end;
+
+    function ExtractString(Index : Byte) : String;
+      {-Return substring for Index}
+    var
+      I : Byte;
+      StartLoc : Byte;
+      S : String;
+      Len : Byte;
+      SCnt : Byte;
+    begin
+      StartLoc := 1;
+      SCnt := 0;
+      I := 1;
+
+      while (I <= Length(SL)) do
+        {Find the Index'th SepChar}
+        if (SL[I] = SepChar) or (I = Length(SL)) then begin
+          Inc(SCnt);
+          if SCnt = Index then begin
+            {Extract the string}
+            if (SL[I] <> SepChar) and (I = Length(SL)) then
+              Len := (I - StartLoc) + 1
+            else
+              Len := I - StartLoc;
+            Move(SL[StartLoc], S[1], Len);
+            S[0] := Char(Len);
+            ExtractString := S;
+            Exit;
+          end else begin
+            StartLoc := I+1;
+            Inc(I);
+          end;
+        end else
+          Inc(I);
+
+      {Bad SL if we get here}
+      ExtractString := '';
+    end;
+
+  begin
+    {Inits}
+    AsyncStatus := 0;
+    FoundS := '';
+    FoundI := 0;
+
+    {Check for empty string}
+    if SL = '' then
+      GotError(epNonFatal + ecInvalidArgument);
+
+    {If ignoring case, upcase the target string}
+    if FlagIsSet(PR^.Flags, ptIgnoreDelimCase) then
+      for I := 1 to Length(SL) do
+        SL[I] := Upcase(SL[I]);
+
+    {Find number of substrings and save first char of each substring}
+    SubCnt := 1;
+    FirstChar[1] := SL[1];
+    for I := 1 to Length(SL) do
+      if SL[I] = SepChar then begin
+        Inc(SubCnt);
+        if I < 255 then
+          FirstChar[SubCnt] := SL[I+1];
+      end;
+
+    if (SubCnt > 255) or (SubCnt = 0) then
+      GotError(epNonFatal + ecInvalidArgument);
+
+    {Initial conditions}
+    FillChar(Candidate, MaxSubs, 0);
+    FillChar(SubPos, MaxSubs, 1);
+    NewTimer(ET, Timeout);
+
+    {Loop until timeout or we get a match}
+    repeat
+      {Get and process next char}
+      GetCharTimeout(C, Timeout);
+      if AsyncStatus <> ecOk then
+        Exit;
+      WaitChar(@Self, C);
+      if FlagIsSet(PR^.Flags, ptIgnoreDelimCase) then
+        C := Upcase(C);
+
+      {Run C through matcher -- checks all substrings at their current positions}
+      if MatchOneChar(C) then begin
+        {Found a complete match, we're finished here}
+        FoundI := LastIndex;
+        FoundS := ExtractString(LastIndex);
+        Exit;
+      end else
+        {Keep checking more chars...}
+        Inc(I);
+    until (AsyncStatus <> ecOk);
+  end;
+
+  procedure AbstractPort.SetWaitCharProc(WCP : WaitCharProc);
+    {-Sets procedure to get chars during WaitForChar/String}
+  begin
+    WaitChar := WCP;
+  end;
+
+  procedure AbstractPort.SetAbortFunc(AFunc : AbortFunc);
+    {-Sets AFunc as the user abort function}
+  begin
+    PR^.UserAbort := AFunc;
+  end;
+
+  function AbstractPort.UserAbort : Boolean;
+    {-Calls the user abort function}
+  begin
+    UserAbort := PR^.UserAbort;
+  end;
+
+  function AbstractPort.ProtocolInProgress : Boolean;
+    {-Returns True if this port is currently processing a protocol}
+  begin
+    ProtocolInProgress := PR^.ProtocolActive;
+  end;
+
+  {---- Internal methods -------}
+  procedure AbstractPort.ptAllcaseCharSet(var CS : CharSet);
+    {-Make CS a non case sensitive set}
+  const
+    BitMask : array[1..8] of Byte = ($01, $02, $04, $08, $10, $20, $40, $80);
+  var
+    SetArray : array[0..31] of Byte absolute CS;
+    I, J : Word;
+    Ordinal : Integer;
+    Stop : Byte;
+
+  procedure AddMember(M : Byte);
+    {-Make M a member of CS}
+  var
+    I, J : Byte;
+  begin
+    Inc(M);
+    I := M div 8;
+    J := M mod 8;
+    SetArray[I] := SetArray[I] or BitMask[J];
+  end;
+
+  begin
+    {Process upper case chars}
+    Ordinal := 64;
+    for I := 8 to 12 do begin
+      {Set stop limit for this byte}
+      if I = 12 then
+        Stop := 1
+      else
+        Stop := 8;
+      {For each upcase char in this byte, add a locase char}
+      for J := 1 to Stop do begin
+        if (SetArray[I] and BitMask[J]) = BitMask[J] then
+          AddMember(Ordinal+32);
+        Inc(Ordinal);
+      end;
+    end;
+
+    {Process lower case chars}
+    Ordinal := 96;
+    for I := 12 to 16 do begin
+      {Set stop limits for this byte}
+      if I = 16 then
+        Stop := 1
+      else
+        Stop := 8;
+      {For each locase char in this byte, add an upcase char}
+      for J := 1 to Stop do begin
+        if (SetArray[I] and BitMask[J]) = BitMask[J] then
+          AddMember(Ordinal-32);
+        Inc(Ordinal);
+      end;
+    end;
+  end;
+
+  function AbstractPort.ptUserAbort : Boolean;
+    {-User function -- calls the user specified abort function}
+  begin
+    ptUserAbort := PR^.UserAbort;
+  end;
+
+  function AbstractPort.ptWaitComplete(ET : EventTimer) : Boolean;
+    {-Returns True if ET expired or UserAbort returns True}
+  begin
+    ptWaitComplete := True;
+
+    {Check for timer expired or user abort}
+    if TimerExpired(ET) then
+      AsyncStatus := ecTimeout
+    else if ptUserAbort then
+      AsyncStatus := ecUserAbort
+    else
+      {Still waiting...}
+      ptWaitComplete := False;
+  end;
+
+  {$IFDEF UseStreams}
+  constructor AbstractPort.Load(var S : IdStream);
+    {-Abstract Load for a port object}
+  begin
+    PR := nil;
+    if not Root.Init then
+      Fail;
+    AsyncStatus := ecOk;
+  end;
+
+  procedure AbstractPort.Store(var S : IdStream);
+    {-Abstract Store for a port object}
+  begin
+    {nothing to do}
+  end;
+  {$ENDIF}
+
+  {$IFDEF UseUart}
+  {--------------------- UartPort -------------------------}
+  constructor UartPort.InitFast(ComName : ComNameType; NewBaud : LongInt);
+    {-Opens ComName with default line options}
+  begin
+    with DefaultLineOptions do
+      UartPort.InitCustom(ComName, NewBaud, Parity, DataBits, StopBits,
+                          InSize, OutSize, Options);
+    if AsyncStatus <> ecOk then
+      Fail;
+  end;
+
+  constructor UartPort.InitKeep(ComName : ComNameType; InSize, OutSize : Word);
+    {-Opens ComName (without changing line options}
+  var
+    SaveStatus : Word;
+  begin
+    if not AbstractPort.Init then
+      Fail;
+    uInitPortKeep(PR, ComName, InSize, OutSize);
+    if AsyncStatus <> ecOk then begin
+      SaveStatus := AsyncStatus;
+      Done;
+      AsyncStatus := SaveStatus;
+      Fail;
+    end else begin
+      ComPortName := ComName;
+      WaitChar := NoWaitChar;
+    end;
+  end;
+
+  constructor UartPort.InitCustom(ComName : ComNameType; Baud : LongInt;
+                                  Parity : ParityType; DataBits : DataBitType;
+                                  StopBits : StopBitType;
+                                  InSize, OutSize : Word;
+                                  Options : Word);
+    {-Opens a com port}
+  var
+    SaveStatus : Word;
+  begin
+    if not AbstractPort.Init then
+      Fail;
+    uInitPort(PR, ComName, Baud, Parity, DataBits, StopBits,
+              InSize, OutSize, Options);
+    if AsyncStatus <> ecOk then begin
+      SaveStatus := AsyncStatus;
+      Done;
+      AsyncStatus := SaveStatus;
+      Fail;
+    end else begin
+      ComPortName := ComName;
+      WaitChar := NoWaitChar;
+    end;
+  end;
+
+  destructor UartPort.Done;
+    {-close/dispose port}
+  begin
+    if PR <> nil then
+      uDonePort(PR);
+    AbstractPort.Done;
+  end;
+
+  procedure UartPort.SetLine(Baud : LongInt;
+                             Parity : ParityType;
+                             DataBits : DataBitType;
+                             StopBits : StopBitType);
+    {-Calls device-level SetLine}
+  begin
+    uSetLine(PR, Baud, Parity, DataBits, StopBits);
+  end;
+
+  procedure UartPort.GetLine(var Baud : LongInt;
+                             var Parity : ParityType;
+                             var DataBits : DataBitType;
+                             var StopBits : StopBitType;
+                             FromHardware : Boolean);
+    {-Calls device-level GetLine}
+  begin
+    uGetLine(PR, Baud, Parity, DataBits, StopBits, FromHardware);
+  end;
+
+  procedure UartPort.SetModem(DTR, RTS : Boolean);
+    {-Calls device-level SetMode}
+  begin
+    uSetModem(PR, DTR, RTS);
+  end;
+
+  procedure UartPort.GetModem(var DTR, RTS : Boolean);
+    {-Calls device-level GetMode}
+  begin
+    uGetModem(PR, DTR, RTS);
+  end;
+
+  procedure UartPort.GetChar(var C : Char);
+    {-Calls device-level GetChar}
+  begin
+    uGetChar(PR, C);
+  end;
+
+  procedure UartPort.PeekChar(var C : Char; PeekAhead : Word);
+    {-Calls device-level PeekChar}
+  begin
+    uPeekChar(PR, C, PeekAhead);
+  end;
+
+  procedure UartPort.StartTransmitter;
+    {-Calls device-level StartTransmitter}
+  begin
+    uStartTransmitter(PR);
+  end;
+
+  procedure UartPort.PutChar(C : Char);
+    {-Calls device-level PutChar}
+  begin
+    uPutChar(PR, C);
+  end;
+
+  function UartPort.CharReady : Boolean;
+    {-Returns True if at least one character has been received}
+  begin
+    CharReady := uCharReady(PR);
+  end;
+
+  function UartPort.TransReady : Boolean;
+    {-Returns True if it's ok to transmit one character}
+  begin
+    TransReady := uTransReady(PR);
+  end;
+
+  procedure UartPort.SendBreak;
+    {-Calls device-level SendBreak}
+  begin
+    uSendBreak(PR);
+  end;
+
+  procedure UartPort.ActivatePort(Restore : Boolean);
+    {-Calls device-level ActivatePort}
+  begin
+    uActivatePort(PR, Restore);
+  end;
+
+  procedure UartPort.DeactivatePort(Restore : Boolean);
+    {-Calls device-level DeactivatePort}
+  begin
+    uDeactivatePort(PR, Restore);
+  end;
+
+  procedure UartPort.SavePort(var PSR);
+    {-Calls device-level SavePort}
+  begin
+    uSavePort(PR, PSR);
+  end;
+
+  procedure UartPort.RestorePort(var PSR);
+  begin
+    uRestorePort(PR, PSR);
+  end;
+
+  procedure UartPort.GotError(StatusCode : Word);
+    {-Calls device-level GotError}
+  begin
+    uGotError(PR, StatusCode);
+  end;
+
+  {$IFDEF UseStreams}
+  constructor UartPort.Load(var S : IdStream);
+    {-Load a UartPort from a stream}
+  var
+    ComName : ComNameType;
+    InSize : Word;
+    OutSize : Word;
+  begin
+    if not AbstractPort.Load(S) then
+      Fail;
+
+    {Read in ComName and buffer sizes}
+    S.Read(ComName, SizeOf(ComName));
+    S.Read(InSize, SizeOf(InSize));
+    S.Read(OutSize, SizeOf(OutSize));
+    if S.PeekStatus <> 0 then
+      Fail;
+
+    {Do standard InitKeep stuff}
+    uInitPortKeep(PR, ComName, InSize, OutSize);
+    if AsyncStatus <> ecOk then begin
+      Done;
+      Fail;
+    end;
+
+    with PR^ do begin
+      {Modify PortRec with data from stream}
+      S.ReadRange(SWFFull, InBuff);
+      S.Read(ModemControl, SizeOf(ModemControl));
+      S.Read(LineControl, SizeOf(LineControl));
+      S.Read(SWFState, SizeOf(SWFState));
+      S.ReadRange(SWFOnChar, BreakReceived);
+      S.ReadRange(TxInts, OldUart);
+      S.ReadRange(CurParity, SaveChar);
+      S.ReadRange(HWFTransMask, ISRActive);
+      @ErrorProc := S.ReadUserPointer(@NoErrorProc);
+      if @ErrorProc = nil then
+        ErrorData := nil
+      else
+        ErrorData := @Self;
+      @UserAbort := S.ReadUserPointer(@NoAbortProc);
+      @WaitChar := S.ReadUserPointer(@NoWaitChar);
+
+      {Exit on any errors}
+      if S.PeekStatus <> 0 then begin
+        Done;
+        Fail;
+      end;
+
+      {Physically update the line parameters}
+      SetLine(CurBaud, CurParity, CurDataBits, CurStopBits);
+      if AsyncStatus <> ecOk then begin
+        Done;
+        Fail;
+      end;
+
+      {Phsyically update modem control}
+      SetModem(FlagIsSet(ModemControl, DTRMask),
+               FlagIsSet(ModemControl, RTSMask));
+
+      {$IFDEF UseStatus}
+      {Allocate status buffer}
+      if UseStatusBuffer then begin
+        EnableStatusBuffer;
+        if AsyncStatus <> ecOk then begin
+          Done;
+          Fail;
+        end;
+      end;
+      {$ENDIF}
+    end;
+  end;
+
+  procedure UartPort.Store(var S : IdStream);
+    {-Store a UartPort in a stream}
+  begin
+    AbstractPort.Store(S);
+
+    with PR^ do begin
+
+      {Write ComName and buffer sizes}
+      S.Write(PortName, SizeOf(PortName));
+      S.Write(InBuffLen, SizeOf(InBuffLen));
+      S.Write(OutBuffLen, SizeOf(OutBuffLen));
+      S.WriteRange(SWFFull, InBuff);
+      S.Write(ModemControl, SizeOf(ModemControl));
+      S.Write(LineControl, SizeOf(LineControl));
+      S.Write(SWFState, SizeOf(SWFState));
+      S.WriteRange(SWFOnChar, BreakReceived);
+      S.WriteRange(TxInts, OldUart);
+      S.WriteRange(CurParity, SaveChar);
+      S.WriteRange(HWFTransMask, ISRActive);
+      S.WriteUserPointer(@ErrorProc, ptNoErrorProc);
+      S.WriteUserPointer(@UserAbort, ptNoAbortProc);
+      S.WriteUserPointer(@WaitChar, ptNoWaitCharProc);
+    end;
+  end;
+  {$ENDIF}
+  {$ENDIF}
+
+  {$IFDEF UseInt14}
+  {--------------------- Int14Port -------------------------}
+  constructor Int14Port.InitFast(ComName : ComNameType; NewBaud : LongInt);
+    {-Opens ComName with default line options}
+  begin
+    with DefaultLineOptions do
+      InitCustom(ComName, NewBaud, Parity, DataBits, StopBits,
+                 InSize, OutSize, Options);
+    if AsyncStatus <> ecOk then
+      Fail;
+  end;
+
+  constructor Int14Port.InitKeep(ComName : ComNameType; InSize, OutSize : Word);
+    {-Opens ComName (without changing line options}
+  var
+    SaveStatus : Word;
+  begin
+    if not AbstractPort.Init then
+      Fail;
+    iInitPortKeep(PR, ComName, InSize, OutSize);
+    if AsyncStatus <> ecOk then begin
+      SaveStatus := AsyncStatus;
+      Done;
+      AsyncStatus := SaveStatus;
+      Fail;
+    end else begin
+      ComPortName := ComName;
+      WaitChar := NoWaitChar;
+    end;
+  end;
+
+  constructor Int14Port.InitCustom(ComName : ComNameType; Baud : LongInt;
+                                   Parity : ParityType; DataBits : DataBitType;
+                                   StopBits : StopBitType;
+                                   InSize, OutSize : Word;
+                                   Options : Word);
+    {-Opens the ComName com port}
+  var
+    SaveStatus : Word;
+  begin
+    if not AbstractPort.Init then
+      Fail;
+    iInitPort(PR, ComName, Baud, Parity, DataBits, StopBits,
+              InSize, OutSize, Options);
+    if AsyncStatus <> ecOk then begin
+      SaveStatus := AsyncStatus;
+      Done;
+      AsyncStatus := SaveStatus;
+      Fail;
+    end else begin
+      ComPortName := ComName;
+      WaitChar := NoWaitChar;
+    end;
+  end;
+
+  destructor Int14Port.Done;
+    {-close/dispose port}
+  begin
+    if PR <> nil then
+      iDonePort(PR);
+    AbstractPort.Done;
+  end;
+
+  procedure Int14Port.SetLine(Baud : LongInt;
+                              Parity : ParityType;
+                              DataBits : DataBitType;
+                              StopBits : StopBitType);
+    {-Calls device-level SetLine}
+  begin
+    iSetLine(PR, Baud, Parity, DataBits, StopBits);
+  end;
+
+  procedure Int14Port.GetLine(var Baud : LongInt;
+                              var Parity : ParityType;
+                              var DataBits : DataBitType;
+                              var StopBits : StopBitType;
+                              FromHardware : Boolean);
+    {-Calls device-level SetLine}
+  begin
+    iGetLine(PR, Baud, Parity, DataBits, StopBits, FromHardware);
+  end;
+
+  procedure Int14Port.SetModem(DTR, RTS : Boolean);
+    {-Calls device-level SetMode}
+  begin
+    iSetModem(PR, DTR, RTS);
+  end;
+
+  procedure Int14Port.GetModem(var DTR, RTS : Boolean);
+    {-Calls device-level SetMode}
+  begin
+    iGetModem(PR, DTR, RTS);
+  end;
+
+  procedure Int14Port.GetChar(var C : Char);
+    {-Calls device-level GetChar}
+  begin
+    iGetChar(PR, C);
+  end;
+
+  procedure Int14Port.PeekChar(var C : Char; PeekAhead : Word);
+    {-Calls device-level PeekChar}
+  begin
+    iPeekChar(PR, C, PeekAhead);
+  end;
+
+  procedure Int14Port.StartTransmitter;
+    {-Calls device-level StartTransmitter}
+  begin
+    iStartTransmitter(PR);
+  end;
+
+  procedure Int14Port.PutChar(C : Char);
+    {-Calls device-level PutChar}
+  begin
+    iPutChar(PR, C);
+  end;
+
+  function Int14Port.CharReady : Boolean;
+    {-Returns True if at least one character has been received}
+  begin
+    CharReady := iCharReady(PR);
+  end;
+
+  function Int14Port.TransReady : Boolean;
+    {-Returns True if it's ok to transmit one character}
+  begin
+    TransReady := iTransReady(PR);
+  end;
+
+  procedure Int14Port.SendBreak;
+    {-Calls device-level SendBreak}
+  begin
+    iSendBreak(PR);
+  end;
+
+  procedure Int14Port.ActivatePort(Restore : Boolean);
+    {-Calls device-level ActivatePort}
+  begin
+    iActivatePort(PR, Restore);
+  end;
+
+  procedure Int14Port.DeactivatePort(Restore : Boolean);
+    {-Calls device-level DeactivatePort}
+  begin
+    iDeactivatePort(PR, Restore);
+  end;
+
+  procedure Int14Port.SavePort(var PSR);
+    {-Calls device-level SavePort}
+  begin
+    iSavePort(PR, PSR);
+  end;
+
+  procedure Int14Port.RestorePort(var PSR);
+  begin
+    iRestorePort(PR, PSR);
+  end;
+
+  procedure Int14Port.GotError(StatusCode : Word);
+    {-Calls device-level GotError}
+  begin
+    iGotError(PR, StatusCode);
+  end;
+
+  {$IFDEF UseStreams}
+  constructor Int14Port.Load(var S : IdStream);
+    {-Load a UartPort from a stream}
+  var
+    ComName : ComNameType;
+    InSize : Word;
+    OutSize : Word;
+  begin
+    if not AbstractPort.Load(S) then
+      Fail;
+
+    {Read in ComName and buffer sizes}
+    S.Read(ComName, SizeOf(ComName));
+    S.Read(InSize, SizeOf(InSize));
+    S.Read(OutSize, SizeOf(OutSize));
+    if S.PeekStatus <> 0 then
+      Fail;
+
+    {Do standard InitKeep stuff}
+    iInitPortKeep(PR, ComName, InSize, OutSize);
+    if AsyncStatus <> ecOk then begin
+      Done;
+      Fail;
+    end;
+
+    with PR^ do begin
+      {Modify PortRec with data from stream}
+      S.ReadRange(SWFFull, InBuff);
+      S.Read(ModemControl, SizeOf(ModemControl));
+      S.Read(LineControl, SizeOf(LineControl));
+      S.Read(SWFState, SizeOf(SWFState));
+      S.ReadRange(SWFOnChar, BreakReceived);
+      S.ReadRange(TxInts, OldUart);
+      S.ReadRange(CurParity, SaveChar);
+      S.ReadRange(HWFTransMask, ISRActive);
+      @ErrorProc := S.ReadUserPointer(@NoErrorProc);
+      if @ErrorProc = nil then
+        ErrorData := nil
+      else
+        ErrorData := @Self;
+      @UserAbort := S.ReadUserPointer(@NoAbortProc);
+      @WaitChar := S.ReadUserPointer(@NoWaitChar);
+
+      {Fail on any errors}
+      if S.PeekStatus <> 0 then begin
+        Done;
+        Fail;
+      end;
+
+      {Physically update the line parameters}
+      SetLine(CurBaud, CurParity, CurDataBits, CurStopBits);
+      if AsyncStatus <> ecOk then begin
+        Done;
+        Fail;
+      end;
+
+      {Phsyically update modem control}
+      SetModem(FlagIsSet(ModemControl, DTRMask),
+               FlagIsSet(ModemControl, RTSMask));
+    end;
+  end;
+
+  procedure Int14Port.Store(var S : IdStream);
+    {-Store a UartPort in a stream}
+  begin
+    AbstractPort.Store(S);
+
+    with PR^ do begin
+
+      {Write ComName and buffer sizes}
+      S.Write(PortName, SizeOf(PortName));
+      S.Write(InBuffLen, SizeOf(InBuffLen));
+      S.Write(OutBuffLen, SizeOf(OutBuffLen));
+      if S.PeekStatus <> 0 then
+        Exit;
+
+      {Write specific data areas from PortRecord}
+      S.WriteRange(SWFFull, InBuff);
+      S.Write(ModemControl, SizeOf(ModemControl));
+      S.Write(LineControl, SizeOf(LineControl));
+      S.Write(SWFState, SizeOf(SWFState));
+      S.WriteRange(SWFOnChar, BreakReceived);
+      S.WriteRange(TxInts, OldUart);
+      S.WriteRange(CurParity, SaveChar);
+      S.WriteRange(HWFTransMask, ISRActive);
+      S.WriteUserPointer(@ErrorProc, ptNoErrorProc);
+      S.WriteUserPointer(@UserAbort, ptNoAbortProc);
+      S.WriteUserPointer(@WaitChar, ptNoWaitCharProc);
+    end;
+  end;
+  {$ENDIF}
+  {$ENDIF}
+
+  procedure NoWaitChar(APPtr : AbstractPortPtr; C : Char);
+    {-Empty wait char procedure}
+  begin
+  end;
+
+  {$IFDEF UseStreams}
+  {$IFDEF UseUart}
+  procedure UartPortStream(SPtr : IdStreamPtr);
+    {-Register all types needed for streams containing UartPort objects}
+  begin
+    SPtr^.RegisterType(otUartPort, veUartPort, TypeOf(UartPort),
+                       @UartPort.Store, @UartPort.Load);
+  end;
+  {$ENDIF}
+
+  {$IFDEF UseInt14}
+  procedure Int14PortStream(SPtr : IdStreamPtr);
+    {-Register all types needed for streams containing UartPort objects}
+  begin
+    SPtr^.RegisterType(otInt14Port, veInt14Port, TypeOf(Int14Port),
+                       @Int14Port.Store, @Int14Port.Load);
+  end;
+  {$ENDIF}
+  {$ENDIF}
+
+
+
+
+

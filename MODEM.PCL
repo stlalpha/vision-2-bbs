@@ -1,0 +1,154 @@
+Unit Modem;
+                                     { PCL -> ViSiON/2 Interface }
+Interface                            { Thrown together by Crimson Blade }
+
+Uses Crt, Pcl4p, ConfigRt, GenTypes;
+
+Procedure OpenPort;
+Procedure SetParam (ComPort:Integer; BaudRate:LongInt; Parity:Boolean);
+Procedure SendChar(K:Char);
+Function GetChar : Char;
+Function Numchars : Integer;
+Procedure DontAnswer;
+Procedure DoAnswer;
+Function Carrier : Boolean;
+Function Ring : Boolean;
+Procedure ClosePort;
+Procedure HangUp;
+Procedure NukeInput;
+Procedure NukeOutPut;
+
+Var Buffer  : Array[1..2048] Of Byte;
+    ComPort : Integer;
+    Baud : Integer;
+
+Implementation
+
+Function MatchBaud(BaudRate : LongInt) : Integer;
+Const
+   BaudRateArray : array[1..10] of LongInt =
+       (300,600,1200,2400,4800,9600,19200,38400,57600,115200);
+Var
+   I : Integer;
+Begin
+   For i := 1 to 10 Do If BaudRateArray[i] = BaudRate Then
+      Begin
+        MatchBaud := i - 1;
+        Exit;
+      End;
+   MatchBaud := -1;
+End;
+
+Procedure OpenPort;
+Var Code : Integer;
+Begin
+  ComPort := Cfg.UseCom - 1;
+  Baud := MatchBaud(Cfg.DefBaudRate);
+  Code := SioRxBuf(ComPort, Ofs(Buffer), Seg(Buffer), Size2048);
+  If Code < 0
+    Then Begin
+      Writeln('Error Creating Receive Buffer!');
+      Exit;
+    End;
+  Code := SioReset(ComPort,Baud);
+  If Code <> 0 Then Code := SioReset(ComPort,Baud);
+  If Code <> 0 Then Begin
+    Writeln('Error Resetting COM PORT: ',Cfg.UseCom);
+    Exit;
+  End;
+  Code := SioParms(ComPort, NoParity, OneStopBit, WordLength8);
+  If Code <> 0 Then Begin
+    Writeln('Error Setting Paramters COM PORT: ',Cfg.UseCom);
+    Exit;
+  End;
+  Code := SioRxFlush(ComPort);
+  Code := SioFIFO(ComPort,Level_8);
+  Code := SioDTR(ComPort,Read);
+  If Code = 0
+    Then Code := SioDTR(ComPort,SetOn);
+  Code := SioRTS(ComPort,Read);
+  If Code = 0
+    Then Code := SioRTS(ComPort,SetOn);
+End;
+
+Procedure SetParam (ComPort:Integer; BaudRate:LongInt; Parity:Boolean);
+Var Code : Integer;
+Begin
+  Baud := MatchBaud(BaudRate);
+  Code := SioBaud(ComPort,Baud);
+End;
+
+Procedure SendChar(K : Char);
+Var Code : Integer;
+Begin
+  Code := SioPutC(ComPort,K);
+End;
+
+Function GetChar : Char;
+Begin
+  GetChar := Char(SioGetC(ComPort,0));
+End;
+
+Function NumChars : Integer;
+Begin
+  NumChars := SioRxQue(ComPort);
+End;
+
+Procedure DontAnswer;
+Var Code : Integer;
+Begin
+  Code := SioDTR(ComPort,Clear);
+End;
+
+Procedure DoAnswer;
+Var Code : Integer;
+Begin
+  Code := SioDTR(ComPort,SetOn);
+  Code := SioRTS(ComPort,SetOn);
+End;
+
+Function Carrier : Boolean;
+Var Code : Integer;
+Begin
+  Code := SioDCD(ComPort);
+  Carrier := Code > 0;
+End;
+
+Function Ring : Boolean;
+Var Code : Integer;
+Begin
+  Code := SioRI(ComPort);
+  Ring := Code > 0;
+End;
+
+Procedure ClosePort;
+Var Code : Integer;
+Begin
+  Code := SioDone(ComPort);
+End;
+
+Procedure HangUp;
+Var Cnt,X : Byte;
+Begin
+  Cnt := 1;
+  While (Cnt < 6) And (Carrier) Do Begin
+    DontAnswer;
+    Delay(500);
+    DoAnswer;
+    If Carrier
+      Then For X := 1 to 3
+        Do SendChar('+');
+    Inc(Cnt);
+  End;
+End;
+
+Procedure NukeInput;
+Begin
+End;
+
+Procedure NukeOutPut;
+Begin
+End;
+
+Begin
+End.

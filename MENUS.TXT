@@ -1,0 +1,82 @@
+
+ViSiON/2 Configrable Menu Commands
+
+(File Commands) Fx, where x can be ...
+
+ 'D' : Download file(s)
+ 'A' : Add file(s) to batch
+ 'V' : View file archive
+ 'T' : Type a text file
+ 'R' : Remove a file from batch
+ 'I' : Get info on a file
+ 'U' : Upload file(s);
+ 'L' : List file(s) by user config
+ 'W' : List file(s) by who uploaded
+ 'A' : Change file area
+ 'S' : Search for file (text/wildcard)
+ 'N' : Newscan current file conference
+ 'B' : List files in batch
+ 'Z' : Config file newscan
+ 'E' : Edit file user has uploaded;
+ ']' : Move one file area forward
+ '[' : Move one file area backward
+
+(File SysOp Commands) $x, where x can be
+
+ 'S' : Sort area(s)
+ 'A' : Change file area
+ ']' : Move one file area forward
+ '[' : Move one file area backwards
+ 'X' : View transfer log
+ 'W' : Add files by wildcard
+ 'F' : Add a single file
+ 'D' : View a DOS directory
+ 'M' : Modify current file area
+ 'K' : Kill current file area
+ 'O' : Reorder areas
+ 'B' : Add a file to batch
+ 'D' : Delete all in batch
+ 'E' : Edit all in batch
+ 'V' : View all in batch
+ 'P' : Move file(s)
+ '=' : Rename a file
+ 'N' : SysOp file newscan
+ 'L' : List files normal
+ '!' : List files by who uploaded
+
+(Message Base Commands) Mx, wher x can be:
+
+ 'P' : Post msg in current area
+ 'N' : Newscan all flagged areas
+ 'R' : Newscan current area
+ 'K' : Delete a message;
+ 'L' : List message titles
+ 'E' : Edit a bulletin;
+ ']' : Move to next message area
+ '[' : Move to previous message area
+ 'F' : Configure message newscan
+ 'T' : Toggle base in newscan
+ 'U' : Process QWK reply packet
+ 'D' : Make QWK packet
+ 'G' : Set Max QWK msgs per area
+ 'A' : Change message area
+
+(Message SysOp Menu) $x, where x can be
+
+ 'S' : Set board access by name
+ 'A' : Set board access for all
+ 'L' : List user's with access
+ 'M' : Move a bulletin
+ 'B' : Bulletin to text
+ 'E' : Edit current sub-board;
+ 'K' : Kill current sub-board;
+ 'O' : Re-Order boards
+
+(New User Voting) Nx, where x can be
+
+ 'L' : List new users
+ 'N' : Newscan new users
+ 'S' : Newscan new users without arrow bars
+ 'V' : Vote on user ## (use ## for keys)
+ 'X' : Vote on user ## without arrow bars
+

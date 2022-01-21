@@ -1,0 +1,60 @@
+
+ACS - Access Conditioning System
+
+'Quick Reference by Crimson Blade'
+
+    ACS is widely used system which allows a sysop to grant and
+restrict access to various parts of the BBS.  This system is now
+a part of ViSiON/2.  With ACS, you can 'fine tune' access to
+menu commands depending on many factors.
+
+Command       Description
+------------------------------------------------------------------------
+!             a 'NOT' flag, switches true and false.
+()            V/2 processes anything within ()'s first.
+|             'OR' flag, true if either two compared variables pass
+A             true of user has ANSI/Avatar graphics
+Bxxx          true if baud is >= 'xxx', where is 24,48,96,192,etc
+Cx            true if message conferences = 'x'
+Dxx           true if file level is > 'xx'
+Exx           true is PCR (post/call ratio) passes, if 'xx' is blank,
+              user's set PCR will be used.
+Fx            true if 'x'(a-z) flag is set for current user
+Hx            true if current time hour = 'x'
+Ixxxxx        true if last user input = 'xxxxx'
+L             true if local
+Pxx           true if uses has more than 'xx' file points
+Sxx           true if user level is >= 'xx'
+Txx           true if user's time left is >= 'xx'
+Uxx           true if user number = 'xx'
+V             true if user level is >= specified login level
+Xx            true if file conf = 'x'
+Yhh:mm/hh:mm  true if current time is within hh:mm/hh:mm am/pm required
+------------------------------------------------------------------------
+
+Note: All 'xxx' variables mentioned above should be lower case or
+      numeric.
+
+If you are not familiar with using ACS, here are some examples to help
+explain this system.
+
+S50                    : Command will run if user level is greater than
+                         or equal to 50.
+!S50                   : Command will NOT run if user level greater than
+                         or equal to 50.
+S50D50                 : Command will run if user level is >= 50 AND user
+                         file level is >= 50.
+S25Fa                  : Command will run if user level is >= 25 AND user
+                         has the flag 'A' set.
+S100|Fb                : Command will run if user level is >= 100 OR user
+                         has the 'B' flag set.
+Y1:00 am/3:00 pm       : Command will be run if the time is within 1:00 am
+                         and 3:00 pm
+E30|X1                 : Command will run if user's PCR is >= 30 OR if file
+                         conference = 1
+(AB96S25Fd)|S100       : Command will run if user has ANSI, is at 9600 bps
+                         or higer, has a user level 25 or more, and has
+                         flag 'D' set, OR it will run if user has a level
+                         set of 100 or greater.
+Evision                : Command will run if user's last input was 'vision'
+

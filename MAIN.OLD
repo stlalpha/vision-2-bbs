@@ -1,0 +1,177 @@
+{$R-,S-,I-,D-,F-,V-,B-,N-,L+,O+ }
+
+unit main;
+
+interface
+
+uses crt,dosmem,mnet,configrt,gentypes,modem,gensubs,subs1,subsovr,subs2,
+     userret,overret1,mainr2,{bulletin}configur,doors,{email,FileXfer,}
+     mycomman,voting,{Rumors}NEW_FS,UserList,NodeChat,MainMenu;
+
+{Procedure Do_Menu_System;}
+
+procedure mainsysopcommands;
+procedure mainmenuproc;
+
+procedure breakout;
+
+implementation
+
+procedure mainsysopcommands;
+var i,q:integer;
+begin
+  If (Urec.Level < Cfg.SysOpLevel) and (TempSysOp = False) Then Exit;
+  If (Not(local)) And (cfg.sysopmenupassword<>'') then Begin
+     Write(Direct,#27+'[2J');
+     Password('Main SysOp Area Entry; Password: '+Cfg.SysopMenuPassword+' > ');
+     WriteStr(^R'SysOp Password'^A': *');
+     CloseWindow;
+     If Not Match(inpt,cfg.sysopmenupassword) Then Begin
+       Writeln(^G'Sorry, that''s not it...');
+       Exit;
+     End;
+  End;
+  repeat
+    q:=menu ('Sysop','SYSOP','QTEANDUCIJSKVMFRZG-O^HB');
+    case q of
+      2:; { editoldspecs; }
+      3:readerrlog;
+      4:addnews;
+      5:editnews;
+      6:delerrlog;
+      7:editusers;
+      8:; { sysopconf; } {settime;}
+      9:infoformhunt;
+      10:; { showallforms; }
+      11:viewsyslog;
+      12:delsyslog;
+      13:showallsysops;
+      14:makeuser;
+      15:; {readfeedback;}
+      16:removeallforms;
+      17:; { zapspecifiedusers; }
+      18:RemoteDosShell;
+{/
+      19:Begin
+           WriteHdr('Add a User to New User Voting...');
+           Write(^S^R'User Name: ');
+           InputBox(30);
+           I:=0;
+           If inpt>'' Then I:=LookUpUser(inpt);
+           If I>0 then AddToNuv(LookUpUName(i));
+         End;
+
+      20:; {NodeLists;}
+      21:EditStatus;
+      22:; { Help('SYSOP.HLP'); }
+      23:BlackList;
+    end
+  until (q=1) or hungupon
+end;
+
+procedure mainmenuproc;
+Label Xfer, XferStart;{ MsgStart;} { ohhhhh bad labels! }
+Var Q, T, Temp : Integer;
+begin
+  { VotingBooth(True); }
+  Repeat
+{    if fromdoor and (returnto='D') then doorsmenu; }
+    RandomRumor;
+    CurSection := MainSysOp;
+    Q := Menu('','MAIN','ABCDEFGHIXKLMNOPURSTQVW|YZ+-!&$%^.=');
+    Writeln;
+    Case Q Of
+      1 :; { ViewWhich; }
+      2 : ; { OtherBBS; }
+      3 : SummonSysop;
+      4 : ShowDailyLog;
+      {5 : EmailMENU;}
+      6:feedback;
+      7:logoff;
+      8:; { help('MAINMENU.HLP'); }
+      9:; { Infoforms; }
+      11:configure;
+      12:Begin
+           WriteHdr('User Listing Utility');
+           UserListUtils;
+         End;
+{      13:Begin
+          MsgStart:
+          T:=0;
+          If Cfg.AskMsgConf then ChangeConf(true) Else MsgConf:=1;
+          If (MsgConf<>-1) and (Upcase(Inpt[1])<>'Q')
+           then T:=bulletinmenu(True) else MsgConf:=1;
+           If T=-32767 Then Goto XferStart;
+         End; }
+      14:printnews(0,False);
+      {15:Nuv(False);}
+      16:; {DoorsMenu;}
+      17:Add_Auto_Sig; {QuoteForTheDay;}
+      18:;{rumormenu;}
+      19:showsystemstatus;
+(*      10,20:Begin
+           XferStart:
+{           If Cfg.AskFileConf then ChangeConf(False) Else FileConf:=1; }
+           If Upcase(Inpt[1])<>'Q' Then Begin
+           T:=0;
+           Temp:=1;
+           If FileConf<>-1 then Begin
+             Xfer:
+             DemonRaid('File Points',5,urec.udpoints);
+             T:=0; {UdSection(T<1,Temp);}
+        {     If T=-32767 Then Goto MsgStart; }
+             If T>0 then Begin
+               {T    := FileSysOp(T);}
+               Temp := T;
+               If T>0 then Goto Xfer;
+             End;
+           End ELSE FileConf:=1;
+         End;
+         End;  *)
+      21:;{QuickMenu;}
+      22:;{VotingBooth (False);}
+      23:showlastcallers;
+      24:transfername;
+      25:yourstatus;
+      26:setlastcall;
+      27:changepwd;
+      28:Pick_Emulation; {ChangeMenus;}
+      29:MultiNode_Chat; { requestraise; }
+      30:; {showad;}
+      31:PrintFile(Cfg.TextFiledir + 'DONATION.ANS');
+      32 : MainSysopCommands;
+      33 : ShowCredits;
+      34 : BEGIN
+             Writeln(^M^R'Registered SysOp'^A': '^S+RegSysOp);
+             Writeln(^R'Registered BBS  '^A': '^S+RegBBS+^M);
+           END;
+      35 : {Do_Menu_System;}
+    End
+  Until Hungupon;
+  UpdateNode('0');
+end;
+
+{$F+}
+
+procedure breakout;
+begin
+  if (erroraddr=nil) and (exitcode=e_controlbreak) then begin
+    textattr:=7;
+    updateuserstats (false);
+    writeln (direct,' ú ViSiON/2 Halted ú');
+    writereturnbat;
+    ensureclosed;
+    window (1,1,80,25);
+    gotoxy (1,25);
+    clreol;
+    if not carrier
+      then dontanswer
+  end;
+  doneexitproc
+end;
+
+{$F-}
+
+begin
+  addexitproc (@breakout)
+end.

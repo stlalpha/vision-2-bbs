@@ -1,0 +1,236 @@
+{$V-,I-,B-,R-}
+{$M 5000,5000,12000}
+
+Program V2_App;
+
+Uses Dos,Crt,Fastttt5,Winttt5,Iottt5,KeyTTT5;
+
+Type ScreenType = Array[0..3999] of Byte;
+     AnswerStr = String[50];
+     Answers = Record
+       SysOp,
+       SysOpAff,
+       BBSName,
+       BBSPhone,
+       BBSAff,
+       NumUsers,
+       NumLD,
+       CurSoftware,
+       CurNet,
+       CompDescrip,
+       ModemType,
+       Megage,
+       RealName,
+       Address,
+       SysOpVoice:AnswerStr;
+       Pay:Boolean;
+     End;
+
+Var ScreenAddr : ScreenType Absolute $B800:$0000;
+    A : Answers;
+
+Procedure UnCrunch (var Addr1,Addr2; BlkLen:Integer);
+Begin
+  InLine
+   ($1E/$C5/$B6/Addr1/$C4/$BE/Addr2/$8B/$8E/BlkLen/$8B/$D7/
+    $B4/$00/$AC/$3C/$10/$73/$07/$80/$E4/$F0/$0A/$E0/$EB/$44/
+    $3C/$18/$74/$13/$73/$19/$2C/$10/$02/$C0/$02/$C0/$02/$C0/
+    $02/$C0/$80/$E4/$0F/$0A/$E0/$EB/$2D/$81/$C2/$A0/$00/$8B/
+    $FA/$EB/$25/$3C/$1A/$75/$0B/$AC/$49/$51/$32/$ED/$8A/$C8/
+    $AC/$EB/$0D/$90/$3C/$19/$75/$11/$AC/$51/$32/$ED/$8A/$C8/
+    $B0/$20/$0B/$C9/$74/$03/$AB/$E2/$FD/$59/$49/$AB/$0B/$C9/
+    $74/$02/$E2/$AA/$1F);
+End;
+
+Procedure DrawScreen;
+Const
+  IMAGEDATA : array [1..772] of Char = (
+    #15,#20,' ',#7 ,'ú',#25,#3 ,#15,'V','i','S','i','O','N','/','2',' ',
+    'T','h','e',' ','R','E','V','i','s','i','o','n',' ','B','B','S',' ',
+    'A','p','p','l','i','c','a','t','i','o','n',' ','(','c',')',' ','R',
+    'u','t','h','l','e','s','s',' ','E','n','t','e','r','p','r','i','s',
+    'e','s',' ','1','9','9','3',#25,#4 ,#7 ,'ú',' ',#24,#15,#26,'O','°',
+    #24,#26,'O','°',#24,#26,#7 ,'°',#8 ,#23,'Ý',#25,'=','Þ',#15,#20,#26,
+    #7 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'S','y','s','O','p',' ',
+    'N','a','m','e',':',#25,'1',#8 ,'Þ',#15,#20,#26,#7 ,'°',#24,#26,#7 ,
+    '°',#8 ,#23,'Ý',' ',#1 ,'S','y','s','O','p',' ','A','f','f','i','l',
+    'i','a','t','i','o','n','s',':',#25,')',#8 ,'Þ',#20,'°','°',#15,#26,
+    #5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'B','B','S',' ','N','a',
+    'm','e',':',#25,'3',#8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,
+    '°',#8 ,#23,'Ý',' ',#1 ,'B','B','S',' ','P','h','o','n','e',' ','N',
+    'u','m','b','e','r',':',#25,'+',#8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',
+    #24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'B','B','S',' ','A','f','f','i',
+    'l','i','a','t','i','o','n','s',':',#25,'+',#8 ,'Þ',#20,'°','°',#15,
+    #26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'N','u','m','b','e',
+    'r',' ','O','f',' ','B','B','S',' ','U','s','e','r','s',':',#25,'(',
+    #8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',
+    #1 ,'N','u','m','b','e','r',' ','O','f',' ','L','D',' ','B','B','S',
+    ' ','U','s','e','r','s',':',#25,'%',#8 ,'Þ',#20,'°','°',#15,#26,#5 ,
+    '°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'C','u','r','r','e','n','t',
+    ' ','B','B','S',' ','S','o','f','t','w','a','r','e',':',#25,#39,#8 ,
+    'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,
+    'C','u','r','r','e','n','t',' ','N','E','T','(','s',')',':',#25,'-',
+    #8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',
+    #1 ,'C','o','m','p','u','t','e','r',' ','D','e','s','c','r','i','p',
+    't','i','o','n',':',#25,#39,#8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,
+    #26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'M','o','d','e','m',' ','T','y','p',
+    'e','/','S','p','e','e','d',':',#25,'+',#8 ,'Þ',#20,'°','°',#15,#26,
+    #5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'H','a','r','d',' ','D',
+    'r','i','v','e',' ','S','p','a','c','e',':',#25,'+',#8 ,'Þ',#20,'°',
+    '°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'S','y','s',
+    'O','p',#39,'s',' ','R','e','a','l',' ','N','a','m','e',':',#25,'*',
+    #8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',
+    #1 ,'S','y','s','O','p',#39,'s',' ','A','d','d','r','e','s','s',':',
+    #25,',',#8 ,'Þ',#20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,
+    'Ý',' ',#1 ,'S','y','s','O','p',#39,'s',' ','V','o','i','c','e',' ',
+    'P','h','o','n','e',' ','N','u','m','b','e','r',':',#25,'!',#8 ,'Þ',
+    #20,'°','°',#15,#26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',' ',#1 ,'A',
+    'r','e',' ','y','o','u',' ','w','i','l','l','i','n','g',' ','t','o',
+    ' ','p','a','y',' ','t','h','e',' ','r','e','g','i','s','t','r','a',
+    't','i','o','n',' ','f','e','e','?',#25,#16,#8 ,'Þ',#20,'°','°',#15,
+    #26,#5 ,'°',#24,#26,#7 ,'°',#8 ,#23,'Ý',#25,'=','Þ',#20,'°','°',#15,
+    #26,#5 ,'°',#24,#26,#10,'°',#8 ,#26,'>','°',#15,#26,#5 ,'°',#24,#26,
+    'O','°',#24,#25,'O',#24,#24);
+Begin
+  ClrScr;
+  Uncrunch(ImageData,ScreenAddr[0],772);
+  Textattr:= 16 * 4 + 14;
+  GotoXy(1,24);
+  Write(' [F10] Finished');
+End;
+
+Procedure Init_Answers;
+Begin
+  FillChar(A,SizeOf(A),#0);
+End;
+
+Procedure Init_Techno;
+Const X : Array[1..16] of Byte =
+         (23,31,21,29,29,32,35,33,27,33,29,29,30,28,39,56);
+Var Cnt : Byte;
+
+  Procedure String_It(Cnt:Byte; Var An:AnswerStr);
+  Begin
+    String_Field(Cnt,An,Replicate((71 - X[Cnt]),'*'));
+  End;
+
+Begin
+  Create_Fields(16);
+  Allow_Beep(False);
+  Allow_ESC(False);
+  Define_Colors(15,4,0,7,14,4);
+  Add_Field(1,16,2,16,2,23,5);
+  For Cnt := 2 to 15 Do
+    Add_Field(Cnt,Cnt-1,Cnt+1,Cnt-1,Cnt+1,X[Cnt],Cnt+4);
+  Add_Field(16,15,1,15,1,56,20);
+  String_It(1,A.SysOp);
+  String_It(2,A.SysOpAff);
+  String_It(3,a.BBSName);
+  String_It(4,a.BBSPhone);
+  String_It(5,a.BBSAff);
+  String_It(6,a.NumUsers);
+  String_It(7,a.NumLD);
+  String_It(8,a.CurSoftware);
+  String_It(9,a.CurNet);
+  String_It(10,a.CompDescrip);
+  String_It(11,a.ModemType);
+  String_It(12,a.Megage);
+  String_It(13,a.RealName);
+  String_It(14,a.Address);
+  String_It(15,a.SysOpVoice);
+  Boolean_Field(16,A.Pay,'*');
+End;
+
+Procedure SaveAnswers;
+Var FileName : String[80];
+    Okay : Boolean;
+    F : Text;
+Begin
+  Repeat
+    Okay := True;
+    GotoXy(1,24);
+    TextAttr := 4 * 16 + 15;
+    ClrEol;
+    Write('Save as what filename? (CR/Aborts) : ');
+    TextAttr := 4 * 16 + 14;
+    Readln(FileName);
+    If Filename = ''
+      Then Begin
+        textattr:=1;
+        clrscr;
+        Halt;
+      end;
+    Assign(F,FileName);
+    Rewrite(F);
+    If IoResult <> 0 Then Begin
+      Close(F);
+      Okay := False;
+      GotoXy(1,24);
+      ClrEol;
+      Sound(1000);
+      Delay(100);
+      NoSound;
+      Write('Unable to open: ',Filename);
+      Delay(1500);
+    End;
+  Until Okay;
+  Writeln(F,'ViSiON/2 The REVision Application');
+  Writeln(F);
+  Writeln(F,'SysOp Name        : ',A.SysOp);
+  Writeln(F,'SysOp Affiliations: ',A.SysOpAff);
+  Writeln(F,'BBS Name          : ',A.BBSName);
+  Writeln(F,'BBS Phone Number  : ',A.BBSPhone);
+  Writeln(F,'BBS Affiliations  : ',A.BBSAff);
+  Writeln(F,'Number Of Users   : ',A.Numusers);
+  Writeln(F,'Number Of LD Users: ',A.NumLD);
+  Writeln(F,'Current Software  : ',A.CurSoftware);
+  Writeln(F,'Current NET(s)    : ',A.CurNet);
+  Writeln(F,'Computer Descrip. : ',A.CompDescrip);
+  Writeln(F,'Modem Type/Speed  : ',A.ModemType);
+  Writeln(F,'Total Meggage     : ',A.Megage);
+  Writeln(F,'SysOp Real Name   : ',A.Realname);
+  Writeln(F,'SysOp Address     : ',A.Address);
+  Writeln(F,'SysOp Voice Number: ',A.SysOpVoice);
+    Write(F,'Willing to pay fee: ');
+  If A.Pay
+    Then Writeln(F,'Sure I would..')
+    Else Writeln(F,'Hell NO!');
+  Close(F);
+  TextAttr:=15;
+  ClrScr;
+  Writeln('File Saved As: ',Filename);
+  Writeln;
+  textattr:=14;
+  Writeln('Send this file private to Crimson Blade or Digital Disorder on one of these');
+  Writeln('ViSiON/2 Beta Sites...');
+  Writeln;
+  Writeln('Countdown To Chaos; 704-664-9116 (Should be up when this is out)');
+  Writeln('Unknown Origin; 214-UNK-NOWN (SysOp: The Unknown)');
+  Writeln;
+  textattr:=9;
+  Writeln('Registration Costs...');
+  Writeln('Relatives     : Free');
+  Writeln('Close Friends : $30');
+  Writeln('Who Are You?  : $50');
+  Writeln;
+  writeln('Feel free to add suggestions/comments to the end of this file.');
+End;
+
+Procedure GetAnswers;
+Begin
+  Init_Answers;
+  Init_Techno;
+  Process_Input(1);
+  SaveAnswers;
+  Dispose_Fields;
+End;
+
+Procedure MainThing;
+Begin
+  DrawScreen;
+  GetAnswers;
+End;
+
+Begin
+  MainThing;
+End.

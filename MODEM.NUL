@@ -1,0 +1,152 @@
+Unit Modem;
+
+{*- Flashback's Modem Driver Routine
+    Written by Acid Cripple for MyAnus
+    Productions '92                    -*}
+
+
+
+Interface
+
+uses OOCom,ApPort,ConfigRt,GenTypes,Crt;
+
+{*- Having these call it is SLOWER! -*}
+
+Procedure SetParam(ComPort:Byte; BaudRate:LongInt; Parity:Boolean);
+Procedure ClosePort;
+Procedure DontAnswer;
+Procedure DoAnswer;
+Procedure HangUp;
+Procedure SendChar(K:char);
+Procedure OpenComPort;
+Function  GetChar:Char;
+Function  Carrier:Boolean;
+Function  Ring : Boolean;
+Function  NumChars:Word;
+
+Procedure NukeInput;
+Procedure NukeOutput;
+
+procedure IntOff;
+procedure IntOn;
+
+Var
+ P:UartPortPtr;
+
+Implementation
+
+{ make a varible global in this unit called P : UartPortPtr; }
+{ to open the port use New(UartPortPtrType, InitFast(ComX, Speed)) }
+{ ComX is a enumerated type ComType = (com1, com2, com3, com4, ..);}
+{ If you want to have multiple ports open make another UartPortPtr Varible}
+{ and have a parameter at the beginning of these procedures :
+         Procedure Example ( P : UartPortPtr; Ch : char); }
+
+                   { not needed }
+                      {  ^   }
+                      {  |  }
+Procedure SetParam(ComPort:Byte; BaudRate:LongInt; Parity:Boolean);
+Var
+   K:Char;
+Begin
+
+ P^.ChangeBaud(BaudRate);
+ if Parity then
+    P^.ChangeParity(EvenParity)
+ else
+    P^.ChangeParity(NoParity);
+
+End;
+
+Procedure SendChar(K:char);
+Begin
+  { P^.PutCharTimeOut (K,182); }
+End;
+
+Function GetChar:Char;
+Var K:Char;
+begin
+ { P^.GetCharTimeOut(k,182);
+   GetChar:=K; }
+end;
+
+Function Carrier : Boolean; Begin Carrier:=P^.CheckDcd; End;
+
+Function Ring : Boolean; Begin Ring := P^.CheckRi; End;
+
+Procedure ClosePort; Begin Dispose(P,Done); End;
+
+Procedure DontAnswer; begin P^.SetDtr (False) end;
+
+Procedure DoAnswer; begin P^.SetDtr (True) end;
+
+Function NumChars:Word; begin NumChars:=P^.InBuffUsed; end;
+
+procedure IntOff; Begin inline($9C/$FA); End;
+procedure IntOn; Begin inline($9D/$FB); End;
+
+Procedure OpenComPort;
+Const ComArray:Array [1..{3}8] of ComNameType=
+  (Com1,Com2,Com3,Com4,Com5,Com6,Com7,Com8{,Com9,Com10,Com11,Com12,Com13,Com14,
+   Com15,Com16,Com17,Com18,Com19,Com20,Com21,Com22,Com23,Com24,Com25,Com26,
+   Com27,Com28,Com29,Com30,Com31,Com32,Com33,Com34,Com35,Com36,Com37,Com38} );
+Begin
+
+New(P,InitCustom(
+    ComArray[cfg.usecom],
+    Cfg.DefBaudRate,
+    NoParity,
+    8,
+    1,
+    (2 * 1024),                         (* configset.recvbuf, *)
+    (2 * 1024),                         (* configset.sendbuf, *)
+    defportoptions));
+End;
+
+Procedure HangUp;
+procedure elite(ss:mstr);
+var cnt,ptr:integer;
+    k:char;
+begin
+  ptr:=0;
+  while ptr<length(ss) do
+    begin
+      Inc(ptr);
+      k:=ss[ptr];
+      case k of
+        '|':sendchar (^M);
+        '~':delay (500);
+        '^':begin
+              Inc(ptr);
+              if ptr>length(ss)
+                then k:='^'
+                else k:=upcase(ss[ptr]);
+              if k in ['A'..'Z']
+	        then sendchar (chr(ord(k)-64))
+		else sendchar(k)
+            end;
+				else sendchar (k)
+      end;
+      delay (50);
+    end;
+  cnt:=0;
+end;
+
+Var cnt:byte;
+begin
+cnt:=0;
+While Carrier and (Cnt<5) do begin
+  dontanswer;
+  delay(500);
+  elite(cfg.modemhangupstr);
+  delay(500);
+  doanswer;
+  inc(cnt);
+End;
+end;
+
+Procedure NukeInput; Begin End;
+Procedure NukeOutput; Begin End;
+
+Begin
+End.

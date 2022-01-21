@@ -1,0 +1,360 @@
+Menu Editing Doc's
+Written By: Nocturnus
+For ViSiON/2 .84 THE REVision
+
+  ViSION/2 has now added the configurability of many Public Domain softwares
+by adding the menu editing feature.  Now you can make your ViSiON/2 look like
+whatever you decide.  Now on with the info.
+
+  First you need to make sure you have everything set up correct, after that
+you can run the MENUEDIT.EXE file and start configuring you BBS.  Now there
+are all the defalut menus, and I will include examples in here for your
+understanging.  All you need to do is check to see if the commands are correct.
+Now I will attempt to explain all the menu commands. Here we go...
+
+
+-- Using MENUEDIT.EXE --
+
+  After running MENUEDIT.EXE, you will see a list of menus that you may edit
+and a list of commands at the bottom of the screen.  These commands are to
+EDIT, you should press F10 or ENTER,  to delete a menu hit F2, and to add a
+menu hit F5.  lets say you would like to edit, so lets say it's the main menu,
+so just goto where it says the menu title is MAIN MENU, and hit F10 or ENTER.
+After that you will be brought to another menu.  Time to describe these.
+
+Menu Title      :  The title of the menu
+Fallback Menu   :  If a menu doesn't exist, it will goto this menu.  Usually
+                    the MAIN Menu.
+Help File       :  The ansi to be displayed if the user hit's ?.
+ASC Required    :  <MORE ON THIS LATER>
+Force Menu Level:  If a user has this level or below, they will always see
+                    the Help File.
+Menu Password   :  If password enter, user must enter this password to get to
+                    the menu.
+Clear Screen    :  <NOT USED>
+Use Menu Prompt :  If set to yes,
+Prompt Line 1   :  The menu prompt displayed for the current menu.  You may
+                    use an external ANSI file here by putting this for the
+                    prompt: %%<directory and filename> ie:
+                    %%c:\vision\menus\main.ans
+Prompt Line 2   :
+Force File Conf.:  File conference to be forced for this menu.
+Force Msg. Conf.:  Message conference to be forced for this menu.
+Force Hot Keys  :  If set to YES, user can just enter the command and not
+                     have to press return.
+
+  To start editing the menus, enter F10.  Now, you can actually change the
+menus around and change commands.  Now you will see the list of commands used
+for the MAIN MENU,  commands for this screen are, F2 to delete a command, F5
+to add a commnad, and Enter to edit a command.  Since this screen is
+self-explainatory, I will go on.  Say you want to edit the first command, so
+hit enter.  You can hit ALT-H to get a list of menu commands from here Now you
+can change the commands, a descripton of the commands are:
+
+Command Description:  Just a little desctiption of the menu.
+Keystroke          :  The letter of the command, ie: M to goto the messages.
+Commands           :  What menu command will take you where.  Every command
+                       need's to be seperated by a ;
+ACS Level          :  User must have this level or above.
+Hidden             :  Will this command be hidden to users?
+
+  Here are some examples of commands that can be used.  Lets say that you
+want to goto the message section and you have 2 conferences, the command
+would look like so:
+
+
+^L;CM;^L;ST1;ST3;^P;^$MESSAGE
+
+
+This does:
+
+^L, clear screen, CM, asks you for what conference, ST1/ST3 displays the
+status screen (in MCICODES.TXT), ^P, pauses the screen, and ^$MESSAGE loads
+the message menu.  Now, if your like me, I have it set up for a New Scan
+menu, so this is how mine looks.
+
+
+^L;CM;^L;ST1;ST3;^P;^$MSGNS
+
+
+It does the same as the above,  but instead of loading the message menu, it
+loads the Message Newscan menu, which looks like this:
+
+Command Description  Keystrokes        Command(s)
+
+Message Newscan       Y                MN;^$MESSAGE
+Message Newscan       ^M               MN;^$MESSAGE
+Abort Newscan         N                ^$MESSAGE
+Quit To Main          Q                ^$MAIN
+
+
+  Now, if the user hit's Y or ENTER, it will go in and Newscan the current
+conference, and it they hit N, it will abort the newscan, and if they hit Q
+it will go back to the main menu.  Since I use the interal prompt, I have
+mine set like this:
+
+Use Menu Prompt : Y
+Prompt Line 1   : |CR|09Scan for new messages? (Y/n):
+  or you could make you prompt line 1 like:
+%%c:\vision\menus\msgns.ans
+  That will display the ansi MSGNS.ANS from you menu directoy.
+
+
+  That should be a good enough doc file for you to understand.  Now this is a
+list of all the menu commands you can use with ViSiON/2.  If you need some
+more help, leave mail to Crimson Blade on Thieft Of Services.
+
+Here is a list of all the menu commands.
+
+ '^M' - Do Command when User Hits <CR> at prompt
+ '##' - Do Command when user hits any number
+ '//' - AutoRun Command ONCE when menu loads
+ '~~' - AutoRun Command at every prompt
+
+(Prompt/Print File Commands) ^x where x can be..  'P' : Pause the screen
+ '@' : Write parameter, get input
+ 'H' : Write parameter, get input w/ hotkey
+ 'B' : Beep User
+ '$' : Change to menu xxxxx
+ 'M' : Carriage return
+ 'F' : Display file using bar (|) MCI Codes
+ 'I' : Display file and get input via '@'
+ 'S' : Show text (param)
+ 'L' : Clear Screen
+ 'X' : Write ^X<parameter> using the config header
+
+(File Commands) Fx, where x can be ...
+
+ 'D' : Download file(s)
+ 'A' : Add file(s) to batch
+ 'V' : View file archive
+ 'T' : Type a text file
+ 'R' : Remove a file from batch
+ 'I' : Get info on a file
+ 'U' : Upload file(s)
+ 'L' : List file(s) by user config
+ 'W' : List file(s) by who uploaded
+ '*' : Change file area
+ 'S' : Search for file (text/wildcard)
+ 'N' : Newscan current file conference
+ 'B' : List files in batch
+ 'Z' : Config file newscan
+ 'E' : Edit file user has uploaded
+ 'C' : Clear batch list
+ ']' : Move one file area forward
+ '[' : Move one file area backward
+
+(File SysOp Commands) $x, where x can be
+
+ 'S' : Sort area(s)
+ 'A' : Change file area
+ ']' : Move one file area forward
+ '[' : Move one file area backwards
+ 'X' : View transfer log
+ 'W' : Add files by wildcard
+ 'F' : Add a single file
+ '*' : View a DOS directory
+ 'M' : Modify current file area
+ 'K' : Kill current file area
+ 'O' : Reorder areas
+ 'B' : Add a file to batch
+ 'D' : Delete all in batch
+ 'E' : Edit all in batch
+ 'V' : View all in batch
+ 'P' : Move file(s)
+ '=' : Rename a file
+ 'N' : SysOp file newscan
+ 'L' : List files normal
+ '!' : List files by who uploaded
+
+(Message Base Commands) Mx, wher x can be:
+
+ 'P' : Post msg in current area
+ 'N' : Newscan all flagged areas
+ 'R' : Newscan current area
+ 'K' : Delete a message
+ 'L' : List message titles
+ 'E' : Edit a bulletin
+ ']' : Move to next message area
+ '[' : Move to previous message area
+ 'F' : Configure message newscan
+ 'T' : Toggle base in newscan
+ 'U' : Process QWK reply packet
+ 'D' : Make QWK packet
+ 'G' : Set Max QWK msgs per area
+ 'A' : Change message area
+
+(Message SysOp Menu) &x, where x can be
+
+ 'S' : Set board access by name
+ 'A' : Set board access for all
+ 'L' : List user's with access
+ 'M' : Move a bulletin
+ 'B' : Bulletin to text
+ 'E' : Edit current sub-board
+ 'K' : Kill current sub-board
+ 'O' : Re-Order boards
+
+(New User Voting) Nx, where x can be
+
+ 'L' : List new users
+ 'N' : Newscan new users
+ 'S' : Newscan new users without arrow bars
+ 'V' : Vote on user ## (use ## for keys)
+ 'X' : Vote on user ## without arrow bars
+
+(Email & SysOp Email Menu) Ex, where x can be
+
+ 'L' : List incoming mail
+ 'O' : List outgoing mail
+ 'F' : Write email to text file
+ 'E' : Edit user who sent mail (sysop only)
+ 'C' : Copy mail to another user
+ 'W' : Forward mail to another user
+ 'S' : Send mail to user
+ 'Z' : Zippy send mail to user
+ 'N' : Scan for new mail only
+ 'R' : Read all mail old & new
+ 'B' : Look in another "mailbox" (sys only)
+ '*' : Look at all mail (sysop only)
+ 'D' : Delete mail by range (sysop only)
+ 'A' : Edit email announcement
+ 'Q' : Ask if user wishes to nuke old mail
+ '-' : Read next mail (no bars/menu)
+ 'K' : Delete current mail
+ 'V' : View outgoing mail
+ '#' : View mail # (if user enters #)
+
+(E-Mail Group Editing) Gx, where x can be
+
+ 'A' : Select a group to edit
+ 'D' : Delete a group
+ 'L' : List members of group
+ 'R' : Add user to group
+ 'K' : Remove member from group
+ 'C' : Set class of group
+ 'S' : Set group creator
+ 'B' : Add users by level
+
+(BBS Listing Menu) Bx, where x can be
+
+ 'L' : List BBS's
+ 'A' : Add a BBS
+ 'C' : Change a entry
+ 'V' : View BBS ANSi
+ 'D' : Delete an entry
+
+(Rumors Menu) Rx, where x can be
+
+ 'L' : List rumors
+ 'A' : Add a rumor
+ 'N' : Rumors newscan
+ 'S' : Search for rumor
+ 'D' : Delete a rumor
+ '*' : Display random rumor
+
+(Doors Menu) Dx, where x can be..
+
+ 'L' : List doors
+ 'O' : Open a door, ask which one
+ 'I' : Get info on a door
+ 'C' : Change door (sysop)
+ 'D' : Delete door (sysop)
+ 'M' : Create a new door (sysop)
+ '*' : Open a door, if you user enter's a number
+ '@' : Force open a door with parameter, (D@##)
+
+(Change Conference) Cx, where x can be..
+
+ 'F' : Change file conference, ask which one
+ 'M' : Change message conference, ask which one
+ 'Yx': Changce file conf, force conf #x (1-99)
+ 'Zx': Change message conf, force conf #x (1-99)
+
+(Voting Menu) Vx, where x can be..
+
+ 'L' : List current choices
+ 'V' : Get or change vote on current topic
+ 'S' : Show results of current topic
+ 'T' : List voting topics
+ 'P' : Select voting topic;
+ 'A' : Add a voting selection (sysop)
+ '*' : Add a voting topic (sysop)
+ 'D' : Delete a voting topic
+ 'R' : Remove a choice from topic
+ 'N' : Next topic / question
+ 'M' : Auto-vote on mandatory topics
+
+(Miscellanous Commands) Ax, where x can be...
+
+ 'A' : Change/edit auto-signature
+ 'E' : Pick emulation set
+ 'S' : Summon sysop
+ 'G' : Log off bbs
+ 'O' : Quick log off
+ 'D' : Show daily log
+ 'F' : Leave sysop feedback
+ 'P' : Change user password
+ 'Y' : View system stat's
+ 'L' : Set last call date
+ 'W' : View last 20 callers
+ 'C' : Configure user account
+ 'U' : User listing
+ '=' : Show Famous Events/Birthdays
+ 'M' : Change Auto-Message
+
+(SysOp Feedback Menu) Ix, where x can be..
+
+ 'W' : Display current feedback stat's
+ 'D' : Delete current feedback
+ 'E' : Edit user who sent current feedback
+ 'I' : View infoform of user who send feedback
+ 'N' : Go to the next pice of feedback
+ 'A' : Read current feedback again
+ 'R' : Reply to current feedback
+ 'L' : List all feedback (by title)
+ 'Q' : Quick read all feedback (using arrow bars)
+ '*' : Quick read NEW feedback (using arrow bars)
+
+(Basic SysOp Commands) %x, where x can be..
+
+ 'A' : Add a user to NUV List
+ 'U' : Edit users
+ 'S' : Edit system status
+ 'B' : Edit blacklist
+ 'X' : Transfer to another user
+ 'N' : Edit news
+ 'K' : Delete error log
+ 'T' : Set BBS time
+ 'M' : Make a user
+ 'H' : Infoform hunt
+ 'V' : View sysop log
+ 'D' : Delete sysop log
+ 'L' : List everyone with sysop access
+ 'E' : Read error log
+ '*' : Nuke all infoforms
+ '&' : Remote DOS shell
+ 'O' : Add News
+
+(Misc. Login Procedures) Lx, where x can be:
+
+ 'W' : Display random welcome screen
+ 'S' : Display random stat screen
+ 'M' : Check for new waiting mail
+ 'F' : Check for feedback (sysops only)
+ 'N' : Check for user notices
+ 'A' : Display auto-message
+ 'U' : Show new users
+ 'L' : Show last five callers
+ 'O' : One liners
+ 'V' : Check for new users to vote on
+
+(Multi-Node Stuff) !x, where x can be
+
+ 'C' : Multi-node chat
+ 'S' : Send mu
+
+
+  Menu Edit Doc's
+   Nocturnus
+   For ViSiON/2

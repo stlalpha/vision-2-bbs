@@ -1,0 +1,226 @@
+{$R-,S-,I-,D-,F-,V-,B-,N-,L+ }
+
+Unit TextRet;
+
+Interface
+
+Uses GenTypes;
+
+Procedure ReloadText (Txt,MailName : SStr; Sector : LongInt; VAR Q : Message);
+Procedure DeleteText (Txt,MailName : Sstr; Sector : LongInt);
+Procedure Return_AutoSig(Var A : AutoSig);
+Function MakeText (Txt,MailName : SStr; VAR Q : Message; OverRide : Lstr) : LongInt;
+Function CopyText (Txt,MailName : SStr; Sector : LongInt) : LongInt;
+Procedure PrintText (Txt,MailName : SStr; Sector : LongInt);
+
+Var LastTextFile,
+    LastMailFile : Lstr;
+
+Implementation
+
+Uses Dos, MNet, ConfigRt, GenSubs, Modem, Subs1;
+
+Var Mail : MailPtrRec;
+
+Procedure AssignName(Txt,MailName : Sstr);
+Var CurTextFile,
+    CurMailFile : Lstr;
+Begin
+  CurTextFile := Cfg.TextDir + Txt;
+  CurMailFile := Cfg.Textdir + MailName;
+  If (CurTextFile <> LastTextFile) Or (CurMailFile <> LastMailFile)
+  Then Begin
+    Close(TextFile);
+    Close(MailFile);
+    Assign(TextFile,CurTextFile);
+    If Not Exist(CurTextFile)
+      Then Rewrite(TextFile)
+      Else Reset(TextFile);
+    Assign(MailFile,CurMailFile);
+    If Not Exist(CurMailFile)
+      Then Rewrite(MailFile)
+      Else Reset(MailFile);
+  End;
+  LastTextFile := CurTextFile;
+  LastMailFile := CurMailFile;
+End;
+
+Procedure Return_AutoSig(Var A : AutoSig);
+Var M : MailPtrRec;
+    X : Byte;
+Begin
+  FillChar(A,SizeOf(A),0);
+  AssignName('AUTOSIG.TXT','AUTOSIG.MAP');
+  If Urec.AutoSig < 0
+    Then Exit;
+  Seek(MailFile,Urec.AutoSig);
+  NRead(MailFile,M);
+  If M.TextPtr > FileSize(TextFile)
+    Then Exit;
+  X := M.TotalLines;
+  If X > 5
+    Then X := 5;
+  Seek(TextFile,M.TextPtr);
+  For X := 1 to X
+    Do NRead(TextFile,A[x]);
+End;
+
+Function MakeText (Txt,MailName : SStr; VAR Q : Message; OverRide : Lstr) : LongInt;
+Var Size : Longint;
+    X,Line : Byte;
+    Temp : Word;
+    T : Text;
+    S : String;
+    L : LStr;
+    TooLong,Lock : Boolean;
+Begin
+
+  AssignName(Txt,MailName);
+
+  MakeText := -1;
+
+  FillChar(Mail,SizeOf(Mail),0);
+
+  Size := FileSize(TextFile);
+  Mail.TextPtr := Size;
+
+  Seek(TextFile,Size);
+
+  If OverRide <> '' Then Begin
+    TooLong := False;
+    Mail.TotalLines := 0;
+    If Not Exist(OverRide)
+      Then Begin
+        Writeln(Usr,OverRide + ' not found!');
+        Exit;
+      End;
+    Lock := LockFile(TextFile,MNLock);
+    Assign(T,OverRide);
+    Reset(T);
+    While Not Eof(T) Do Begin
+      Readln(T,S);
+      TooLong := Length(S) > 80;
+      L := S;
+      NWrite(TextFile,L);
+      Inc(Mail.TotalLines);
+    End;
+    TextClose(T);
+    Lock := LockFile(TextFile,MNUNLock);
+    If TooLong Then
+      Writeln(^M'The maximum line length is 80 characters!'^M);
+  End Else
+  Begin
+    Lock := LockFile(TextFile,MNLock);
+    For X := 1 To Q.NumLines Do
+      NWrite(TextFile,Q.Text[X]);
+    Lock := LockFile(TextFile,MNUNLock);
+    Mail.TotalLines := Q.NumLines;
+  End;
+
+  Size := FileSize(MailFile);
+  Seek(MailFile,Size);
+  NWrite(MailFile,Mail);
+
+  MakeText := Size;
+End;
+
+Procedure ReloadText (Txt,MailName : SStr; Sector : LongInt; VAR Q : Message);
+Var X,Loop : Byte;
+    Temp : Word;
+Begin
+  AssignName(Txt,MailName);
+
+  FillChar(Q,SizeOf(Q),0);
+
+  If Sector > FileSize(MailFile)
+    Then Exit;
+
+  Seek(MailFile,Sector);
+  NRead(MailFile,Mail);
+
+  If Mail.TextPtr > FileSize(TextFile)
+    Then Exit;
+
+  Loop := Mail.TotalLines;
+  If Loop > MaxMessageSize
+    Then Loop := MaxMessageSize;
+
+  Seek(TextFile,Mail.TextPtr);
+
+  For X := 1 to Loop Do
+    NRead(TextFile,Q.Text[X]);
+
+  Q.NumLines := Loop;
+
+End;
+
+Procedure PrintText (Txt,MailName : SStr; Sector: LongInt);
+Var X : Integer;
+    S : Lstr;
+    Temp : Word;
+    K : Char;
+Begin
+
+  AssignName(Txt,MailName);
+
+  If Sector > FileSize(MailFile)
+    Then Begin
+      Writeln(^M^S'Mail Error! (Message pointer out of range)'^M);
+      Exit;
+    End;
+
+  Seek(MailFile,Sector);
+  NRead(MailFile,Mail);
+
+  If Mail.TextPtr > FileSize(TextFile)
+    Then Begin
+      Writeln(^M^S'Mail Error! (Text pointer out of range)'^M);
+      Exit;
+    End;
+
+  AnsiColor(Urec.Color3);
+  Writeln;
+
+  Seek(TextFile,Mail.TextPtr);
+
+  For X := 1 to Mail.TotalLines Do Begin
+    S[0] := #0;
+    NRead(TextFile,S);
+    Subs1.MultiColor(S);
+    Writeln;
+    If (NumChars > 0) Or (KeyHit)
+      Then Begin
+        If NumChars > 0
+          Then K := GetChar
+          Else K := BiosKey;
+        If K in [#32,^X,'X','x'] Then Begin
+          Writeln(^M^S^R'Message Aborted..');
+          Exit;
+        End
+      End
+  End;
+
+  Writeln;
+End;
+
+Function CopyText (Txt,MailName : SStr; Sector : LongInt) : LongInt;
+Begin
+End;
+
+Procedure DeleteText (Txt,MailName : SStr; Sector : LongInt);
+Begin
+  AssignName(Txt,MailName);
+
+  If Sector > FileSize(MailFile)
+    Then Exit;
+
+  Seek(MailFile,Sector);
+  Read(MailFile,Mail);
+  Mail.Deleted := True;
+
+  Seek(MailFile,Sector);
+  Write(MailFile,Mail);
+End;
+
+Begin
+End.

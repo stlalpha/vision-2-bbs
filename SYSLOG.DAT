@@ -1,0 +1,145 @@
+General
+0 1 User % logged on
+0 2 User % invalid password
+0 3 Disconnected
+0 4 System error: %
+
+Main menu
+1 1 Password changed
+1 2 Tried to chat
+1 3 Requested chat: %
+1 4 ** TRANSFERED TO USER % **
+1 5 Wrong password xfering to %
+1 6 Changed name to %
+
+Sysop menu
+2 1 Added to the news
+2 2 Deleted the error log
+2 3 Edited user %
+2 4 Changed the system time/date
+2 5 Created a new guided tour
+2 6 Viewed the system log
+2 7 % deleted the system log
+2 8 Created user %
+
+About menu
+3 1 Added information file %
+3 2 Created information disk file %
+3 3 Changed information file %
+3 4 Deleted information file %
+3 5 Updated date/time stamp %
+
+Bulletin menu
+4 1 ASCII-downloaded %
+4 2 ASCII-uploaded %
+4 3 Sponsor commands: Sub-board=%
+4 4 Created sub-board %
+4 5 Deleted bulletin %
+4 6 Re-edited bulletin %
+
+Board sponsor command menu
+5 1 Let in user %
+5 2 Kicked out user %
+5 3 Access by level for user %
+5 4 Everyone's access: %
+5 5 Renamed sub-board to %
+5 6 Moved file %
+5 7 Wiped out file %
+5 8 Set sponsor to %
+5 9 Re-titled file %
+5 10 Killed the sub-board
+5 11 Set autodelete to %
+5 12 Set access level to %
+5 13 Moved bulletin %
+5 14 Re-ordered the sub-boards
+5 15 Added resident file %
+5 16 Sorted sub-boards
+
+Configuration menu
+
+Database menu
+7 1 Sysop commands: Database=%
+7 2 Created database %
+
+Database sysop menu
+8 1 Re-ordered databases
+8 2 Renamed database to %
+8 3 Changed entry %
+8 4 Set database access level to %
+8 5 Killed database
+8 6 Deleted entry %
+
+Doors menu
+9 1 Opened door %
+
+Sysop doors menu
+10 1 Changed door %
+10 2 Deleted door %
+10 3 Added door %
+10 4 Created batch file %
+
+Feedback menu
+
+E-mail menu
+
+Group editing menu
+13 1 Created group %
+13 2 Deleted group %
+
+E-mail sysop commands menu
+14 1 Looked in %'s mailbox
+14 2 Scanned all of the mail
+14 3 Group for access to board %
+
+File transfer menu
+15 1 Downloaded %
+15 2 Uploaded %
+15 3 Sysop commands: Area=%
+15 4 Created area %
+
+File transfer sysop commands
+16 1 Searched for new uploads
+16 2 Killed area
+16 3 Renamed area to %
+16 4 Changed file %
+16 5 Moved file %
+16 6 Sorted area
+16 7 Deleted file %
+16 8 Added resident file %
+16 9 Re-ordered areas
+16 10 Disk directory %
+16 11 Set area level to %
+16 12 Set sponsor to %
+16 13 Set upload directory to %
+
+News editing menu
+17 1 Deleted news item %
+17 2 Added news %
+
+User editing menu
+18 1 Set wanted flag to %
+18 2 Let into board %
+18 3 Kicked out of board %
+18 4 By level for board %
+18 5 All sub-boards are now %
+18 6 Changed user's name to %
+18 7 File transfer points: %
+18 8 Changed user's password
+18 9 Deleted user
+18 10 Granted sysop status: %
+18 11 Denied sysop status: %
+18 12 Time left for today: %
+18 13 Viewed user's status
+18 14 File transfer level: %
+18 15 Set user's access level: %
+18 16 Changed phone number: %
+18 17 Part-sysop security violation
+
+Voting booth menu
+19 1 Sysop commands:  Booth=%
+
+Voting booth sysop commands
+20 1 Deleted topic
+20 2 Added choice: %
+20 3 Added topic: %
+

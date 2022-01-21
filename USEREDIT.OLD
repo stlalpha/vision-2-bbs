@@ -1,0 +1,251 @@
+
+
+procedure IceCube;
+var cpu:integer;
+    C:ConfigType;
+begin
+Write(
+'[40m[2J[0;1;47m ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ[40m[s',
+'[u[47mÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ[30m¿[37m [30m [37m³ [0;34;47mEdi[40m[s',
+'[u[47mt [1m[ ] [0;34;47m [Q]uits  Infoforms [V]iew  [F]lags  [40m[s',
+'[u[47m[+] AutoValidate  [B]oards   [1;30m³  [37mÀ[30mÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ[40m[s',
+'[u[47mÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ  [40m[s',
+'[u[47m[37mÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ[40m[s',
+'[u[47mÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ[30m¿  [37m³ [0;30;47mH: [1mHandle....: [40m[s',
+'[u[47m                            [0;30;47mI: [1mTime Left ........[40m[s',
+'[u[47m:          ³  [37m³ [0;30;47mP: [1mPassword..:              [40m[s',
+'[u[47m               [0;30;47mO: [1mLocked out of NET :          ³ [40m[s',
+'[u[47m [37m³ [0;30;47mL: [1mMain Level:                           [40m[s',
+'[u[47m  [0;30;47mC: [1mDeny Chat Request :          ³  [37m³ [40m[s',
+'[u[0;30;47mR: [1mReal Name.:                             [0;30;47m|[40m[s',
+'[u[47m: [1mLocked out of Xfer:          ³  [37m³ [0;30;47mN: [1mP[40m[s',
+'[u[47mhone Num.:                             [0;30;47mY: [1mUnable [40m[s',
+'[u[47mto Post Msg:          ³  [37m³ [0;30;47mT: [1m# Calls...:   [40m[s',
+'[u[47m                          [0;30;47mE: [1mCannot Send Mail .: [40m[s',
+'[u[47m         ³  [37m³ [0;30;47mX: [1mFile Level:                [40m[s',
+'[u[47m             [0;30;47m[: [1mDeny U/L Ability .:          ³  [40m[s',
+'[u[47m[37m³ [0;30;47mG: [1mFile Pts..:                            [40m[s',
+'[u[47m [0;30;47m]: [1mDeny D/L Ability .:          ³  [37m³ [40m[s',
+'[u[0;30;47mU: [1mUploads...:                             [0;30;47m*[40m[s',
+'[u[47m: [1mDeny Rumors Menu .:          ³  [37m³ [0;30;47mD: [1mD[40m[s',
+'[u[47mownloads.:                             [0;30;47m1: [1mFile Me[40m[s',
+'[u[47mnu SysOp ..:          ³  [37m³ [0;30;47m-: [1mUploads K.:   [40m[s',
+'[u[47m                          [0;30;47m2: [1mMsg Menu SysOp ...: [40m[s',
+'[u[47m         ³  [37m³ [0;30;47m=: [1mDownload K:                [40m[s',
+'[u[47m             [0;30;47m3: [1mEmail Menu SysOp .:          ³  [40m[s',
+'[u[47m[37m³ [0;30;47mM: [1m# Of Posts:                            [40m[s',
+'[u[47m [0;30;47m4: [1mVoting Menu SysOp :          ³  [37m³ [40m[s',
+'[u[0;30;47m!: [1mMin. Chars Per Msg :                    [0;30;47m5[40m[s',
+'[u[47m: [1mDoors Menu SysOp .:          ³  [37m³ [0;30;47m@: [1mR[40m[s',
+'[u[47mequired UD Ratio  :                    [0;30;47m/: [1mUse Arr[40m[s',
+'[u[47mows (Bars) :          ³  [37m³ [0;30;47m#: [1mRequired UD K [40m[s',
+'[u[47mRatio:                    [0;30;47m&: [1mFull Screen Editor: [40m[s',
+'[u[47m         ³  [37m³ [0;30;47m$: [1mRequired PCR       :       [40m[s',
+'[u[47m             [0;30;47mZ: [1mAccount Expires:             ³  [40m[s',
+'[u[47m[37m³ [0;30;47mA: [1mUser Account Note  :                   [40m[s',
+'[u[47m                                 ³  [37mÀ[30mÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ[40m[s',
+'[u[47mÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ [40m[s',
+'[u[0m');
+AnsiColor(113);
+With EUrec Do Begin
+  printxy(19,5,handle);
+  if local Then printxy(19,6,Password) Else Printxy(19,6,'Classified!');
+  printxy(19,7,strr(level));
+  Printxy(19,8,realname);
+  printxy(19,9,Phonenum);
+  printxy(19,10,Strr(NumOn));
+  printxy(19,11,strr(udlevel));
+  printxy(19,12,strr(udpoints));
+  Printxy(19,13,strr(uploads));
+  PrintXy(19,14,strr(downloads));
+  PrintXy(19,15,strr(kup));
+  Printxy(19,16,strr(KDown));
+  Printxy(19,17,strr(nbu));
+  PrintXy(28,18,Strr(MsgLength));
+  If udfratio=0 then Printxy(28,19,'None') Else
+    Printxy(28,19,strr(udfratio)+'%');
+  If UDKratio=0 then printxy(28,20,'None') Else
+    Printxy(28,20,strr(UDKratio)+'%');
+  If pcr=0 then printxy(28,21,'None') Else Printxy(28,21,strr(Pcr)+'%');
+  printxy(28,22,sysopnote);
+  printxy(70,5,strr(timetoday));
+  Printxy(70,6,YesNo(No_Net in Config));
+  Printxy(70,7,YesNo(No_Chat in Config));
+  Printxy(70,8,YesNo(No_UdSec in Config));
+  Printxy(70,9,YesNo(No_MsgSec in Config));
+  Printxy(70,10,YesNo(No_Email in Config));
+  Printxy(70,11,YesNo(No_Ul in Config));
+  Printxy(70,12,YesNo(No_Dl in Config));
+  Printxy(70,13,YesNo(ShowRumors in Config));
+  PrintXy(70,14,YesNo(UdSysOp in Config));
+  PrintXy(70,15,YesNo(BulletinSysop in Config));
+  Printxy(70,16,YesNo(EmailSysop in Config));
+  Printxy(70,17,YesNo(VotingSysop in Config));
+  Printxy(70,18,YesNo(DoorsSysop in Config));
+  Printxy(70,19,YesNo(UseBars in Config));
+  Printxy(70,20,YesNo(FSEditor in Config));
+  GoXy(67,21);
+    if (datestr(expires)='0/0/128') or (DateStr(Expires)='0/0/80')
+    then write('Never') else
+    writeln(datestr(expires));
+End;
+Bottomline;
+goxy(10,2);
+end;
+
+procedure choose;
+var gg:char;
+    tmp,cpu:integer;
+    imdone:boolean;
+    temp:sstr;
+
+    Procedure Gs(X,Y,Len:Byte; VAR S:AnyStr);
+    VAR Str:AnyStr;
+    Begin
+      Goxy(X,Y);
+      InputBox(Len);
+      Str:=inpt;
+      If Str>'' then S:=Str;
+      AnsiColor(113);
+      GoXy(X,Y);
+      Tab(S,Len);
+    End;
+
+    Procedure Gi(X,Y,Len:Byte; VAR S:Integer);
+    VAR Str:integer;
+    Begin
+      Goxy(X,Y);
+      InputBox(Len);
+      Str:=Valu(inpt);
+      If inpt>'' then S:=Str;
+      AnsiColor(113);
+      Goxy(X,Y);
+      If S=0 then Tab('None',Len) Else Tab(Strr(S),Len);
+    End;
+
+    Procedure Gli(X,Y,Len:Byte; VAR S:Longint);
+    VAR Str:Longint;
+    Begin
+      Goxy(X,Y);
+      InputBox(Len);
+      Str:=LongValu(inpt);
+      If inpt>'' then S:=Str;
+      AnsiColor(113);
+      Goxy(X,Y);
+      Tab(Strlong(S),Len);
+    End;
+
+    Procedure DoFlags;
+    Begin
+      Goxy(13,2);
+      Write(' User Flags [SPACE]/Quits: ');
+      GetFlag(EUrec.Flags);
+      Goxy(13,2);
+      Write(' [Q]uits  Infoforms [V]iew  [F]lags  [+] AutoValidate');
+    End;
+
+    Procedure Alternate(X,Y:Byte; C:ConfigType);
+    Begin
+      If C in Eurec.Config then Eurec.Config:=Eurec.Config-[C] Else
+        Eurec.Config:=Eurec.Config+[C];
+      Goxy(X,Y);
+      Write(YesNo(C in Eurec.Config));
+    End;
+
+Begin
+ImDone:=False;
+IceCube;
+Repeat
+   GG:=' ';
+   GG:=WaitForChar(False);
+   GG:=Upcase(GG);
+   Case GG OF
+     'F':DoFlags;
+    { 'H':gs(19,5,27,eurec.handle); }
+     'K':Begin
+           AnsiReset;
+           GoXy(1,24);
+           EuDel;
+           IceCube;
+          End;
+     'L':Gi(19,7,6,eurec.level);
+     'X':Gi(19,11,6,eurec.udlevel);
+     'G':Gi(19,12,6,eurec.udpoints);
+     'N':Gs(19,9,10,eurec.phonenum);
+     'R':Gs(19,8,27,eurec.realname);
+     'I':begin
+          gi(70,5,6,eurec.timetoday);
+          If Eurec.Handle=Unam then SetTimeLeft(Eurec.TimeToday);
+        end;
+     'A':Gs(28,22,30,eurec.sysopnote);
+     'P':If (Local) or (Unum=1) Then Gs(19,6,20,eurec.password);
+     'T':Gi(19,10,6,eurec.numon);
+     'U':Gi(19,13,6,eurec.uploads);
+     'D':Gi(19,14,6,eurec.downloads);
+     '-':GLi(19,15,10,eurec.kup);
+     '=':Gli(19,16,10,eurec.kdown);
+     'M':Gi(19,17,6,eurec.nbu);
+     '!':Gi(28,18,6,eurec.msglength);
+     '@':Gi(28,19,6,eurec.udfratio);
+     '#':Gi(28,20,6,eurec.udkratio);
+     '$':Gi(28,21,6,eurec.pcr);
+     'O':Alternate(70,6,No_Net);
+     'C':Alternate(70,7,No_Chat);
+     '|':Alternate(70,8,No_UdSec);
+     'Y':Alternate(70,9,No_MsgSec);
+     'E':Alternate(70,10,NO_Email);
+     '[':Alternate(70,11,No_Ul);
+     ']':Alternate(70,12,No_Dl);
+     '*':alternate(70,13,No_Rumors);
+     '1':Alternate(70,14,UdSysop);
+     '2':Alternate(70,15,BulletinSysop);
+     '3':alternate(70,16,EmailSysop);
+     '4':alternate(70,17,VotingSysOp);
+     '5':alternate(70,18,DoorsSysop);
+     '/':AlterNate(70,19,UseBars);
+     '&':Alternate(70,20,FSEditor);
+     'Z':Begin
+           GoXy(67,21);
+           InputBox(8);
+           AnsiColor(113);
+           If inpt>'' then Eurec.Expires:=DateVal(inpt);
+           GoXy(67,21);
+           If (DateStr(Eurec.Expires)='0/0/128') or (DateStr(Eurec.Expires)='0/0/80')
+             Then Write('Never   ') Else Tab(DateStr(Eurec.Expires),8);
+         End;
+     'B':Begin
+          goxy(1,24);
+          boardflags;
+          IceCube;
+         end;
+     'V':begin
+         goxy(1,24);
+         begin
+          writestr(^P'View which INFOFORM? [1-5] ['^A'1'^P']:*');
+          if inpt='' then inpt:='1';
+          tmp:=valu(inpt);
+          if (tmp>0) and (tmp<6) then Begin
+           showinfoforms(strr(eunum),tmp);
+           HoldScreen;
+           IceCube;
+           End;
+          end;
+       end;
+      'W':begin
+           goxy(1,24);
+           euwanted;
+           IceCube;
+          end;
+      '+':begin
+            Goxy(1,24);
+            WriteStr('Auto-Validate Account? !');
+            If Yes then Defualt;
+            IceCube;
+          end;
+      'Q':imdone:=true;
+     End;
+    goxy(10,2);
+  Until (Imdone) or (HungUpOn);
+  Ansireset;
+  AnsiCls;
+ end;

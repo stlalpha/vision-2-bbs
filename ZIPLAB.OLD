@@ -1,0 +1,357 @@
+{$R-,S-,I-,D-,F+,V-,B-,N-,L+,O+}
+
+Unit ZipLab;
+
+Interface
+
+Uses GenTypes;
+
+Function Pass_ZipLab(Var UD : UDRec) : Boolean;
+
+Implementation
+
+Uses Video, Dos, Crt, ConfigRt, GenSubs, DosMem,
+     Modem, Subs1, Subs2, OverRet1, Windows;
+
+Function Pass_ZipLab(Var UD : UDRec) : Boolean;
+
+Type
+  Where_Types = (Doing,Passed,Failed);
+
+  XY_Rec = Record
+    X_Pos,
+    Y_Pos,
+    Color,
+    Hi_Color : Byte;
+    Show_Char : SStr;
+  End;
+
+  Where_Array = Array[Doing..Failed] of XY_Rec;
+
+  Loc_Rec = Record
+    Test_Integ,
+    Un_Zipping,
+    Virii_Scan,
+    Strip_AV,
+    Remove_Zip,
+    Add_Comment,
+    Add_File : Where_Array;
+  End;
+
+  Prog_Rec = Record
+    ProgName : Sstr;
+    CommLine : Lstr
+  End;
+
+Var
+  Loc : Loc_Rec;                     { Stores Screen Positions }
+  Pro : Array[1..7] Of Prog_Rec;     { What to Execute }
+
+  Function Init_Ansi : Boolean;
+  Var T : Text;
+      S : AnyStr;
+
+      Procedure Inspect_Line;
+
+        Procedure Update(VAR xLoc : Where_Array);
+        Var TType : Char;
+            Temp : XY_Rec;
+            X : Byte;
+
+            Function Get_Next : Byte;
+            Var Temp : SStr;
+            Begin
+              Get_Next := 0;
+              If X > Length(S)
+                Then Exit;
+              While (S[x] iN ['0'..'9']) = False
+                Do Inc(X);
+              Temp := '';
+              While (S[x] in ['0'..'9']) Do Begin
+                Temp := Temp + S[x];
+                Inc(X);
+              End;
+              Get_Next := Valu(Temp);
+            End;
+
+        Begin                         (* Update *)
+          TType := Upcase(S[2]);
+          Delete(S,1,2);
+          X := 1;
+          Temp.X_Pos    := Get_Next;
+          Temp.Y_Pos    := Get_Next;
+          Temp.Color    := Get_Next;
+          Temp.Hi_Color := Get_Next;
+          Temp.Show_Char:= Copy(S,X+1,Length(S));
+          Case TType of
+            'D' : xLoc[Doing]  := Temp;
+            'P' : xLoc[Passed] := Temp;
+            'F' : xLoc[Failed] := Temp;
+          End;
+        End;                          (* Update *)
+
+      Begin
+        With Loc Do
+          Case Upcase(S[1]) Of
+            '1' : Update(Test_Integ);
+            '2' : Update(Un_Zipping);
+            '3' : Update(Virii_Scan);
+            '4' : Update(Strip_AV);
+            '5' : Update(Remove_Zip);
+            '6' : Update(Add_Comment);
+            '7' : Update(Add_File);
+          End
+      End;
+
+  Begin                    (* Init_Ansi *)
+    Init_Ansi := True;
+
+    FillChar(Loc,SizeOf(Loc),0);
+
+    If Not Exist(Cfg.TextFileDir + 'ZIPLAB.NFO')
+      Then Begin
+        Init_Ansi := False;
+        Writeln('Critical File Missing! (ZIPLAB.NFO)');
+        Exit;
+      End;
+
+    Assign(T,Cfg.TextFileDir + 'ZIPLAB.NFO');
+    Reset(T);
+    While Not Eof(T) Do Begin
+      Readln(T,S);
+      If S[1] <> ';'
+        Then Inspect_Line;
+    End;
+    TextClose(T);
+  End;                  (* Init Ansi *)
+
+  Function Test_It(Where:Where_Array; Progname:Sstr; ComLine,T:Lstr) : Boolean;
+  Var Result : Boolean;
+      S : ^Screens;
+
+    Function Is_Okay : Boolean;
+    Var F : Text;
+        B : Boolean;
+        S : String;
+    Begin
+      Is_Okay := True;
+      If Not Exist(Cfg.VisionDir + 'V.TXT')
+        Then Exit;
+      Assign(F,Cfg.VisionDir + 'V.TXT');
+      Reset(F);
+      B := False;
+      While Not Eof(F) Do Begin
+        Readln(F,S);
+        If Pos('NO VIRUSES FOUND.',UpString(S)) > 0
+          Then B := True;
+      End;
+      TextClose(F);
+      Is_Okay := B;
+    End;
+
+    Procedure Print_It(XY : XY_Rec; On:Boolean);
+    Begin
+      GoXy(Xy.X_Pos,
+           Xy.Y_Pos);
+      If On
+        then AnsiColor(XY.Hi_Color)
+        else AnsiColor(Xy.Color);
+      Write(Direct,Xy.Show_Char);
+    End;
+
+  Begin
+    If (Where[Doing].X_Pos < 1)
+    or (Where[Doing].Y_Pos < 1)
+    or (ProgName = '')
+      Then Exit;
+
+    Dos_GetMem(S,SizeOf(S^));
+
+    Print_It(Where[Doing],True);
+
+
+    ReadScr(S^);
+
+    TextAttr := 1;
+    ClrScr;
+    If (T='Virus Scan') Then Begin
+      ExecuteWithSwap(ProgName,ComLine,True);
+      Result := IS_OKAY;
+    End Else Begin
+      ExecuteWithSwap(ProgName,ComLine,False);
+      Result := DosEXiTCode = 0;
+    End;
+
+    WriteScr(S^);
+
+    Print_It(Where[Doing],False);
+    If Result Then
+      Print_It(Where[Passed],True)
+      Else
+        Print_It(Where[Failed],True);
+    If Not Result Then
+      Notice(Cfg.SysOpName,UD.FileName+' failed '+T+' (U/L by '+Unam+')');
+    Test_It := Result;
+
+    Dos_FreeMem(S);
+  End;
+
+  Procedure Nuke_Dir;
+  Var Index : SearchRec;
+      Str   : Lstr;
+      F     : File;
+  Begin
+    Str := Cfg.UploadDir + '*.*';
+    FindFirst(Str,$17,Index);
+    If DosError <> 0 Then Exit;
+    While DosError = 0 Do Begin
+      Assign(F,Cfg.UploadDir+Index.Name);
+      Erase(F);
+      FindNext(Index);
+    End
+  End;
+
+  Function Load_Strings : Boolean;
+  Var F : Text;
+      N : NameStr;
+      E : ExtStr;
+      S : AnyStr;
+
+      Procedure Just_Do_It;
+      Var Temp : AnyStr;
+          What,X : Byte;
+
+        Procedure Make_Com_Line(VAR New : String);
+        Var Ct : Byte;
+            C  : Char;
+            S  : String;
+        Begin
+          Ct   := 0;
+          S[0] := #0;
+          While Ct <> Length(New) do
+             Begin
+               Inc(Ct);
+               If New[Ct] <> '%'
+               Then S := S + New[Ct]
+               Else If Ct < Length(New) then
+                 Begin
+                   Inc(Ct);
+                   C := New[Ct];
+                   Case C of
+                     '1' : S := S + UD.PATH + UD.FILENAME;
+                     '2' : S := S + CFG.UPLOADDIR;         { Work Dir }
+                     '3' : S := S + CFG.TEXTFILEDIR;
+                     '4' : S := S + CFG.VISIONDIR;
+                     '5' : S := S + UD.FILENAME;
+                     '6' : S := S + CFG.ZIPFILEADD
+                   End
+                 End
+             End;
+          New := S;
+        End;
+
+      Begin
+        What := Valu(S[1]);
+        If What < 1
+          Then Exit;
+        X := 3;
+        While (S[x] = #32) And (X < Length(S))
+          Do Inc(X);
+        Case UpCase(S[2]) Of
+          'P' : Pro[What].ProgName := Copy(S,X,$FF);
+          'C' : Begin
+                  Pro[What].CommLine := Copy(S,X,$FF);
+                  Make_Com_Line(Pro[What].CommLine);
+                End;
+        End;
+      End;
+
+  Begin
+    FillChar(Pro,SizeOf(Pro),0);
+    FSplit(UD.FileName,S,N,E);
+    Load_Strings := False;
+    Delete(E,1,1);
+    If Length(E) < 1
+      Then Exit;
+    If Not Exist(Cfg.DataDir + E + '.ZL')
+      Then Exit;
+    Assign(F,Cfg.DataDir + E + '.ZL');
+    Reset(F);
+    While Not Eof(F) Do Begin
+      Readln(F,S);
+      If S[1] <> ';'
+        Then Just_Do_It;
+    End;
+    TextClose(F);
+    Load_Strings := True;
+  End;
+
+Var Pass, C : Boolean;
+    F : File;
+Begin
+  Pass_ZipLab := True;
+
+  If Not Load_Strings
+    Then Exit;
+
+  If Not Init_Ansi
+    Then Exit;
+
+  Pass := True;
+
+  PrintFile(Cfg.TextFileDir + 'ZIPLAB.ANS');
+
+  If Not Test_It(Loc.Test_Integ,
+               Pro[1].ProgName,
+               Pro[1].CommLine,
+               'Integrity Check')
+  Then Pass := False;
+
+  If Not Test_It(Loc.Un_Zipping,
+                Pro[2].ProgName,
+                Pro[2].CommLine,
+                'Un-Zipping (Work Dir)')
+  Then Pass := False;
+
+  Assign(F,Cfg.VisionDir + 'V.TXT');
+  Erase(F);
+
+  If Not Test_It(Loc.Virii_Scan,
+                Pro[3].ProgName,
+                Pro[3].CommLine,
+                'Virus Scan')
+  Then Pass := False;
+
+  C := Test_It(Loc.Strip_AV,
+               Pro[4].ProgName,
+               Pro[4].CommLine,
+               'AV ZIP Strip');
+
+  If Exist(Cfg.Visiondir + 'REMOVE.TXT')
+  Then
+  C := Test_It(Loc.Remove_Zip,
+               Pro[5].ProgName,
+               Pro[5].CommLine,
+               'Removing ZIP Files');
+
+  C := Test_It(Loc.Add_Comment,
+               Pro[6].ProgName,
+               Pro[6].CommLine,
+               'Adding ZIP Comment');
+
+  C := Test_It(Loc.Add_File,
+               Pro[7].ProgName,
+               Pro[7].CommLine,
+               'Including ZIP Add');
+
+  Nuke_Dir;
+  CurAttrib := 0;
+  Write(^S^R);
+  AnsiCls;
+  If Not Pass
+    Then WriteHdr(UpString(UD.FileName)+' Failed ZIPLAB!');
+  Pass_ZipLab := Pass;
+End;
+
+Begin
+End.

@@ -1,0 +1,1344 @@
+{$R-,S-,I-,D-,F-,V-,B-,N-,L+,O+}
+
+unit waitcall;
+
+interface
+
+uses Dos,Crt,MulaWare,Windows,DosMem,Gentypes,statret,configrt,
+     Modem,gensubs,subs1,subsovr,subs2,mailret,userret,
+     Overret1,mainr1,mainr2,feedback,group,email,mainmenu,MyComman;
+
+Function WaitForACall : Boolean;
+
+Implementation
+
+Function Waitforacall:boolean;
+
+Type ScreenType = array [0..3999] of Byte;
+
+Var ScreenAddr : ScreenType Absolute $B800:$0000;
+    OverRide   : Mstr;
+    Mustgetbaud,
+    Switch,
+    SaveScreen : Boolean;
+    Waiting    : MinuteRec;
+    Ring       : String;
+
+{$I WFCMENU1.INC}
+
+  Procedure Cursor(ON:Boolean);
+  Var Regs : Registers;
+  Begin
+    If Not On Then
+    Begin
+      Regs.AH :=1;
+      Regs.CH :=32;
+      Regs.CL :=0;
+    Intr ($10,Regs);
+    End Else
+    Begin
+      Regs.AH:=1;
+      Regs.CH:=6;
+      Regs.CL:=7;
+      Intr ($10,Regs);
+    End
+  End;
+
+  function suporterd:boolean;
+  var brated:baudratetype;
+      TempSprt:Boolean;
+      cnt:byte;
+  begin
+     case connectbaud of
+       300:brated:=b300;
+       1200:brated:=b1200;
+       2400:brated:=b2400;
+       4800:brated:=b4800;
+       9600:brated:=b9600;
+       19200:brated:=b19200;
+     end;
+ TempSprt:=true;
+ if not (brated in cfg.supportedrates) and (connectbaud<9600) then begin
+     cnt:=0;
+     TempSprt:=False;
+     if cfg.LowBaudPassword<>'' then begin
+     Writeln('Your Connect Speed is not within the allowed baud rates!'^M);
+     Repeat
+     WriteStr('Lock-Out Baud password: *');
+     TempSprt:=Match(inpt,cfg.LowBaudPassword);
+     inc(cnt);
+     Until (cnt>2) or (TempSprt);
+     End;
+     If not TempSprt then writeln('Sorry, that baud rate is NOT supported!');
+    delay(1500);
+   end;
+   Suporterd:=TempSprt;
+end;
+
+  Procedure SendString(S:Lstr);
+  Var I:Integer;
+  Begin
+    For I:=1 to Length(S) Do SendChar(S[I]);
+  End;    
+
+  Procedure ReceiveCall(AlreadyConnected:Boolean);
+  var b:byte;
+      timeout,autoswitch:integer;
+      k:char;
+      brate:baudratetype;
+
+    procedure nextrate (var b:baudratetype);
+    var ob:baudratetype;
+    begin
+      ob:=b;
+      repeat
+        b:=succ(b);
+        if b > b57600 then b:=b300;
+        if b=ob then exit
+      until b in cfg.supportedrates
+    end;
+
+    procedure disconnect;
+    begin
+      if carrier then hangupmodem;
+      baudrate := cfg.defbaudrate;
+      parity:=false;
+      setparam (cfg.usecom,baudrate,parity);
+      setupmodem
+    end;
+
+    function seconds:integer;
+    var r:registers;
+    begin
+      r.ah:=$2c;
+      intr ($21,r);
+      seconds:=r.dh
+    end;
+
+  LABEL ABORT,CONNECTED;
+  Var Tempchar:char;
+      Speed:Boolean;
+  Begin
+    local:=false;
+    online:=false;
+    TextAttr:=9;
+    Begin
+      ConnectStr[0]:=#0;
+      BaudStr[0]:=#0;
+      online:=true;
+      If (AlreadyConnected) and (OverRide<>'')
+        Then ConnectStr := OverRide;
+      Delay (100);
+      if (NumChars > 0) Or (ConnectStr <> '')
+      Then Begin
+        Parity := False;
+        If NumChars > 0 Then
+          ConnectStr := ConnectStr + GetChar;
+        delay (100);
+        while numchars>0 do connectstr:=connectstr+getchar;
+      parity:=false;
+      if pos('96',connectstr)>0 then begin
+       baudrate:=baudarray[b9600];
+       goto connected;
+      end ELSE
+      if pos('19',connectstr)>0 then begin
+        baudrate:=baudarray[b19200];
+        goto connected;
+      end ELSE
+      If pos('14',connectstr)>0 then Begin
+        baudrate:=baudarray[b19200];
+        goto connected;
+      End Else
+      IF pos('16',connectstr)>0 then Begin
+        baudrate:=baudarray[b38400];
+        goto connected;
+      End ELSE
+      IF Pos('576',connectstr) > 0 Then Begin
+        baudrate := baudarray[b57600];
+        goto connected;
+      End Else
+      If Pos('384',ConnectStr) > 0 Then Begin
+        BaudRate := BaudArray[b38400];
+        Goto Connected;
+      End Else
+      if pos('12000',connectstr)>0 then begin
+        baudrate := baudarray[b19200];
+        goto connected;
+      end ELSE
+      if pos('12',connectstr)>0 then begin
+        baudrate:=baudarray[b1200];
+        goto connected;
+      end ELSE
+      if pos('24',connectstr)>0 then begin
+        baudrate:=baudarray[b2400];
+        goto connected;
+      end ELSE
+      if pos('11',connectstr)>0 then begin
+        baudrate:=baudarray[b2400];
+        goto connected;
+      end ELSE
+      if pos('10',connectstr)>0 then begin
+        baudrate:=baudarray[b2400];
+        goto connected;
+      end;
+      baudrate:=baudarray[b300];
+      goto connected;
+      writeln (usr,connectstr)
+    end;
+    BEGIN
+      local:=false;
+      online:=false;
+      textattr:=9;
+      window (1,1,80,25);
+      clrscr;
+      window (1,1,80,23);
+      if not mustgetbaud then goto connected;
+      writeln;
+      brate:=b1200; {was b300}
+      parity:=false;
+      timeout:=timer+2;
+      repeat
+      nextrate (brate);
+      baudrate:=baudarray[brate];
+      textattr:=9;
+      write (usr,^M^J'Attempting connection at ',baudrate,' baud... ');
+      setparam (cfg.usecom,baudrate,parity);
+      sendstring ('Hit <CR> ['+Strlong(baudrate)+']');
+      delay (100);
+      if numchars > 0 then if k = #13 then goto connected;
+      autoswitch:=seconds + 3;
+      if autoswitch > 59 then autoswitch:=autoswitch - 60;
+      repeat
+        k:=#0;
+        if keyhit then k:='A' else
+        if numchars > 0 then k:=getchar;
+        if not carrier then exit;
+      until (k <> #0) or (timer >= timeout) or (autoswitch = seconds);
+      if timer >= timeout then hangupmodem;
+      if not carrier then goto abort;
+      if keyhit then begin
+        k:=bioskey;
+        case upcase(k) of
+         #13:goto connected;
+         'D':goto abort;
+        end
+      end else if k <> #0 then begin
+        b:=ord(k);
+        write (usr,b,' received.');
+        if b = 13 then parity:=false else
+        if b = 141 then parity:=true;
+      end else b:=0;
+    until (b=13) or (b=141) or (timer>timeout);
+    If Timer <= Timeout
+    Then Begin
+      Connected:
+        ConnectBaud := BaudRate;
+
+        SetParam(Cfg.UseCom,Baudrate,Parity);
+        BaudStr := Strlong(Connectbaud);
+        Online := True;
+        Urec.Config := [Lowercase,linefeeds,eightycols,ansigraphics];
+        TextAttr := 9;
+
+        If Pos('ARQ',Connectstr)>0 then BaudStr := BaudStr+'/ARQ';
+        If Pos('HST',Connectstr)>0 then BaudStr := BaudStr+'/HST';
+        If Pos('32',Connectstr)>0 then BaudStr := Baudstr+'/V32';
+        If Pos('42',Connectstr)>0 then BaudStr := BaudStr+'/V42';
+
+      {
+        If Exist(cfg.visiondir+'LOGON.BAT') then
+          Exec(getenv('COMSPEC'), '/C LOGON.BAT');
+       }
+
+       If Cfg.LockDTE
+       Then Begin
+         If BaudRate = 1200 Then BaudRate := Cfg.LockRate[2] Else
+         If BaudRate = 2400 Then BaudRate := Cfg.LockRate[3] Else
+         If BaudRate = 4800 Then BaudRate := Cfg.LockRate[4] Else
+         If BaudRate = 9600 Then BaudRate := Cfg.LockRate[5] Else
+         If BaudRate = 19200 Then BaudRate := Cfg.LockRate[6] Else
+         If BaudRate = 38400 Then BaudRate := Cfg.LockRate[7] Else
+         If BaudRate = 57600 Then BaudRate := Cfg.LockRate[8]
+         Else BaudRate := Cfg.DefBaudRate;
+         SetParam(Cfg.UseCom,BaudRate,Parity);
+       End;
+
+       AnsiColor(1);
+       AnsiCls;
+
+       Sr.C[1]:='BR'; Sr.S[1]:=BaudStr;
+       MultiColor(Strng^.ConnectionStr);
+       Writeln(Direct);
+
+       If Cfg.LockDTE
+       Then Begin
+         MultiColor(Strng^.LockedBaudStr);
+         Writeln;
+       End;
+
+      Delay(500);
+
+      If Not Suporterd
+        Then hangup;
+
+      Status.Newcalls := Status.Newcalls + 1;
+      ConnectStr := Baudstr;
+
+      {Fossil_Nuke_Input(Cfg.UseCom);
+      Fossil_Nuke_Output(Cfg.UseCom);}
+
+      If Carrier
+        Then exit
+
+    End;
+    Abort :
+    Disconnect
+  end;
+  end;
+  end;
+
+  Procedure CheckKermie;
+  Begin
+    if (not match(cfg.DszLog,getenv('DSZLOG'))) then begin
+      window (1,1,80,25);
+      clrscr;
+      TextAttr:=7; Write(usr,'('); TextAttr:=15;
+      write(usr,'Correct DSZLOG Setting is not found in enviroment!');
+      TextAttr:=7; Writeln(usr,')');
+        Writeln;
+        TextAttr:=1;
+    	write (usr,'-'); TextAttr:=9;
+        Writeln(usr,' Add line "SET DSZLOG='+cfg.DszLog+'" to batch file.');
+        Halt(100);
+    end;
+  End;
+
+  procedure exitprog;
+  Var X : Byte;
+
+    Procedure ShowBBS(S,P : Lstr);
+    Begin
+      TextAttr := 8;
+      Write(usr,'           þ ');
+      TextAttr := 15;
+      Write(usr,S);
+      TextAttr := 8;
+      Write(Usr,' þ ');
+      TextAttr := 3;
+      Write(Usr,P);
+      TextAttr := 8;
+      Writeln(Usr,' þ');
+    End;
+
+  begin
+    ClrScr;
+    TextMode(co80);
+    Color(15,0);
+    window (1,1,80,25);
+    TextAttr:=8;
+    For X := 1 to 79
+      Do Write(Usr,'Ä');
+    TextAttr := 15;
+    Writeln(usr,'                    ViSiON/2 vo.84A+Y2k Bulletin Board Software');
+    Writeln(usr,'                        (C) Ruthless Enterprises 1993');
+    Writeln(Usr,'                         Programmed by Crimson Blade');
+    TextAttr := 8;
+    For X := 1 to 79
+      Do Write(Usr,'Ä');
+    Writeln(Usr,#13#10#10);
+    ShowBBS('Theft of Services           (Home)  ','505-622-6804');
+    Writeln(Usr);
+    ShowBBS('Wasted Image                (Beta)  ','409-839-4525');
+    ShowBBS('Electronic Frontier         (Beta)  ','913-537-3680');
+    Writeln(Usr);
+    EnsureClosed;
+    Halt(4)
+  End;
+
+  Procedure CheckDay;
+  Begin
+    If Status.Lastdayup <> DateStr(now)
+    Then Begin
+      Status.Lastdayup := Datestr(now);
+      Status.NumDaysUp := Status.numdaysup+1;
+      Status.CallsToday := 0;
+      Writestatus
+    End
+  End;
+
+  procedure dotimedevent;
+  var tf:text;
+  begin
+    window (1,1,80,25);
+    clrscr;
+    Color(14,4);
+    Write(usr,'Executing timed event: ',cfg.eventbatch);
+    writeln (usr);
+    Delay(1000);
+    assign (tf,'DOOR.BAT');
+    rewrite (tf);
+    writeln (tf,cfg.eventbatch);
+    textclose (tf);
+    status.timedeventdate:=datestr(now);
+    ensureclosed;
+    halt (3)
+  end;
+
+  function statusscreen:char;
+
+    Function percent (r1,r2:real):Sstr;
+    Begin
+      If (r2 < 1)
+        Then exit;
+      R2 := Round( (r1 / r2) * 1000 ) / 10;
+      Percent := Streal(r2)+'%'  {:0:1,'%')}
+    End;
+
+    Procedure Color(A,B:Byte);
+    BEGIN
+      TextColor(A);
+      TextBackground(B);
+    END;
+
+  var cnt,numsmail:integer;
+      k:char;
+      tmp:mstr;
+      b,sl:byte;
+      savestatus,done:boolean;
+
+    function slide:string;
+    var s:string;
+        left:Boolean;
+        i:byte;
+    Begin
+      S:='                                                                               '+
+         'ViSiON/2 ver. o.84a+Y2K - Waiting For Call - [F1] Menu [F2] Exit [F3] Redraw Screen '+
+         '                                                                               ';
+{      If (SaveScreen) and (SL in [1,40,80,120]) Then Begin
+        If SaveStatus then Begin
+          If Sl=1 then i:=8 Else
+          If Sl=40 then i:=7 Else
+          If Sl=80 then i:=15 Else
+          If Sl=120 then i:=0;
+        End Else Begin
+           If Sl=1 then i:=8 Else
+          If Sl=40 then i:=7 Else
+          If Sl=80 then i:=15;
+          If Sl=120 then i:=0;
+        End;
+          Textattr:=i;
+          GotoXy(15,1);
+          Writeln(usr,'ViSiON/2 "The Revision" (C) Ruthless Enterprises 1992');
+          GotoXy(15,2);
+          Writeln(usr,'        Waiting For Caller; Screen Saver: ON');
+      End;
+      }
+      If Sl = 159 then Begin
+        If SaveStatus then WriteStatus;
+        SaveStatus:=Not SaveStatus;
+      End;
+      slide:=Copy(S,sl,79);
+      If left then Inc(sl) Else dec(sl);
+      If sl>=159 then left:=not left;
+    End;
+
+    function shouldexit:boolean;
+    begin
+      shouldexit:=done or carrier
+    end;
+
+    procedure handlekey (k:char; beforeabout:boolean);
+    var M : String[10];
+    begin
+      b:=ord(k)-128;
+      case b of
+        availtogglechar:begin
+          toggleavail;
+          if not beforeabout then Begin
+            M := SysOpAvailStr;
+            TextAttr := 31;
+            GotoXy(18,13);
+            { If (switch) or (Cfg.WFCHiRes) then }
+            Write(usr,m);
+          End
+        end;
+        59..64:begin
+          Color(1,0);
+          done:=true;
+          statusscreen:=k
+        end
+      end;
+    end;
+
+    function interrupted (beforeabout:boolean):boolean;
+    Var X,Y:Integer;
+        { But:Button; }
+    Begin
+      X:=1;
+      Y:=1;
+      if keyhit then begin
+        k:=bioskey;
+        SaveScreen:=False;
+        switch := not switch;
+        handlekey (k,beforeabout)
+      end;
+(*
+      Set_Mouse_CurSor_Style(6);
+      Get_Mouse_Action(But,X,Y);
+      Show_Mouse_CurSor;
+      If But=RightB
+        Then Begin
+          K:=#187;
+          SaveScreen:=False;
+          Repeat Until Mouse_Pressed(1)=False;
+          Repeat Until Mouse_Pressed(1)=False;
+          HandleKey(#187,BeforeAbout);
+      End;
+*)
+      Done := Done or Carrier;
+      interrupted:=done;
+    end;
+
+(*
+   $I W1.INC
+   $I W2.INC
+   $I W2-2.INC
+
+*)
+
+    procedure sendstring (x:lstr);
+    var cnt:integer;
+        k:char;
+    begin
+      for cnt:=1 to length(x) do begin
+        sendchar(x[cnt]);
+        delay (20);
+      end;
+      delay (50);
+      while numchars>0 do k:=getchar
+    end;
+
+    procedure phonesringing;
+    begin
+      sendstring ('  ATA'#13)
+    end;
+
+    procedure connectcode (k:char);
+    var timer:word absolute $40:$6c;
+        t:word;
+        k2:char;
+        bd:baudratetype;
+    begin
+      T := Timer + 18;
+      Repeat
+      Until (Timer > T) or Carrier or (NumChars > 0);
+      k2:=getchar;  { Will be #0 if no chars }
+      case k of
+        '1':case k2 of
+              #0:bd:=b300;
+              '0':bd:=b2400;
+              else exit
+            end;
+        '5':bd:=b1200;
+        else exit
+      end;
+      if bd in cfg.supportedrates then begin
+        parity:=false;
+        baudrate:=baudarray[bd];
+        mustgetbaud:=false;
+        t:=timer+18;
+        repeat until carrier or (timer>t)
+      end
+    end;
+
+(*
+    Procedure DoNetEvent;
+    Var C : Char;
+    Begin
+      TextAttr := 9;
+      Window(1,1,80,25);
+      Clrscr;
+      DontAnswer;
+      WriteLn(Usr,'- Preparing to execute ViSiON/2 Net-Mail Procedures..');
+      Writeln(Usr,'- Waiting Until its EXACTLY ',Cfg.NetStc,' (ESC Aborts)');
+      Repeat
+        If KeyPressed
+          Then C := ReadKey;
+      Until (Match(Cfg.NetStc,TimeStr(Now))) or (C = #27);
+      Writeln(usr);
+      If C = #27
+        Then Exit;
+      TextAttr := 15;
+      Writeln(usr,'Lets get down and dirty! Executing ViSiON/2 Net Mail..');
+      delay(2000);
+      ClrScr;
+      Status.LastNETTime := Now;
+      Do_Net_Mail;
+    End;
+
+*)
+
+{$I NEWWFC.INC}
+
+  Procedure NewWFC;
+  Var TotalMins,
+      TotalUp,
+      TotalIdle : Real;
+      X : Sstr;
+
+    Procedure Place(X,Y : Byte; S : Lstr);
+    Begin
+     GotoXy(X,Y);
+     Write(USR,S);
+    End;
+
+  Begin
+
+    ShowNEWWfc;
+
+    TextAttr := 62;
+
+    Place(57,21,RegSysOp);
+    Place(57,22,RegBBS);
+
+    TextAttr := 31;
+
+    Place(18,5,Strr(Status.NewCalls));
+    Place(18,6,Strr(Status.NewUploads));
+    Place(18,7,Strr(Status.NewDownloads));
+    Place(18,8,Strr(Status.NewPosts));
+    Place(18,9,Strr(GetNumMail(1)));
+    Place(18,10,Strr(NumFeedBack));
+    Place(18,11,Strr(Status.NewMail));
+    Place(18,12,Strr(ElapsedTime(Status.NumMinsIdle)));
+    Place(18,13,Copy(SysOpAvailStr,1,10));
+    Place(18,14,TimeStr(Now));
+    Place(18,15,DateStr(Now));
+    Place(18,16,Strlong(Dos_MaxAvail));
+
+    TotalMins := 1440.0 * (Status.NumDaysUp - 1.0) + Timer;
+
+    X := Percent(Status.NumMinsUsed.Total,TotalMins);
+    Place(58,5,Streal(Status.NumMinsUsed.Total) + #32 + '('+X+')');
+
+    X := Percent(Status.NumMinsXfer.Total,TotalMins);
+    Place(58,6,Streal(Status.NumMinsXfer.Total) + #32 + '('+X+')');
+
+    TotalIdle := Status.NumMinsIdle.Total + ElapsedTime(Status.NumMinsIdle);
+
+    X := Percent(TotalIdle,TotalMins);
+    Place(58,7,Streal(TotalIdle) + #32 + '('+X+')');
+
+    Place(58,8,Streal(Status.NumCallers));
+
+    TotalUp := TotalIdle + Status.NumMinsUsed.Total;
+    Place(58,9,Percent(TotalUp,TotalMins) + ' vs. ' +
+               +Percent(TotalMins - TotalUp,TotalMins));
+
+    If Status.NumDaysUp > 0
+      Then TotalUp := Round(10 * Status.NumCallers / Status.NumDaysUp) / 10
+      Else TotalUp := 0;
+
+    Place(58,10,Streal(TotalUp));
+
+    Place(58,11,Strr(Status.NumDaysUp));
+
+{    X := Cfg.NetStart;
+    If X = ''
+      Then } X := 'N/A';
+    Place(58,12,X);
+
+{    X := Cfg.NetStc;
+    If X = ''
+      Then } X := 'N/A';
+    Place(58,13,X);
+
+    { Place(17,19,DateStr(Status.LastNetTime)); }
+
+    X := Cfg.EventTime;
+    If X = ''
+      Then X := 'N/A';
+    Place(58,14,X);
+
+    If TimeTillEvent < 6 Then Begin
+      DontAnswer;
+      If TimeTillEvent < 2
+        Then DoTimedEvent;
+    End;
+
+(*    If TimeTillNet < 6 Then Begin
+      DontAnswer;
+      If TimeTillNet < 2
+        Then DoNetEvent;
+    End;
+*)
+
+    Place(58,15,multitaskername);
+    Place(51,16,Status.LastUser);
+  End;
+
+  Label Cycle;
+  Const Chars : Array[1..4] Of Char = ('/','-','\','|');
+  Var Ch,
+      Tme : Integer;
+      Wait : Word;
+      C : Longint;
+      Return : String;
+  Begin
+
+    Waiting.Started := false;
+    Waiting.Startedat := Timer;
+    Waiting.Total := 0;
+    StartTimer(Waiting);
+    Cursor(False);
+    StatusScreen := #0;
+    Done := False;
+    TextAttr := 1;
+    ClrScr;
+    Ch := 0;
+    C := 0;
+
+    Repeat
+
+      Checkday;
+
+      Tme := ElapsedTime(Waiting);
+
+      If (Cfg.ScreenSave>0) and (Tme>=Cfg.ScreenSave)
+      Then Begin
+        If Not SaveScreen
+        Then Begin
+          SaveStatus:=True;
+          Textattr := 1;
+          ClrScr;
+        End;
+      SaveScreen:=True;
+      End Else Begin
+        If Interrupted (True)
+          Then Exit;
+        NewWfc;
+      End;
+
+      If Interrupted (true)
+        Then exit;
+
+      Cnt := 0;
+      Return[0] := #0;
+
+      Repeat
+
+        If Length(Return) > 200
+          Then Return[0] := #0;
+
+        Wait := 0;
+        While (Wait < 25) And (NumChars < 1) And (Not KeyPressed)
+          Do Begin
+            Delay(1);
+            Inc(Wait);
+          End;
+
+        While NumChars > 0
+          Do Return := Return + GetChar;
+
+        If Pos('CONNECT',Return) > 0
+          Then OverRide := Return;
+
+        If Pos('RING',Return) > 0
+        Then Begin
+          Return[0] := #0;
+          TextAttr := 62;
+          GotoXY(57,23);
+          If Cfg.UseAutoAnswer = False
+          Then Begin
+            If Not SaveScreen
+              Then Write(Usr,'RING!! Answering...');
+            PhonesRinging;
+            Delay(100);
+
+            If Carrier
+              Then Done := True;
+
+          End Else Begin
+             TextAttr := 62;
+              If Not SaveScreen Then Begin
+                Write(usr,'RING            ');
+                Delay(500);
+              End
+            End
+          End Else If Not SaveScreen
+          Then Begin
+            Inc(Ch);
+            If Ch > 4
+              Then Ch := 1;
+            GotoXy(57,23);
+            TextAttr := 62;
+            Write(Usr,Chars[Ch] + ' Waiting...     ');
+        End;
+
+        If Carrier
+          Then Goto Cycle;
+
+      Inc(C);
+
+      Until (C > 300) or (Interrupted (False)) or (Done);
+
+      C := 0;
+      WriteStatus;
+
+      If Not Interrupted (False)
+        Then Switch := Not Switch;
+
+    Until Done;
+    Cycle :
+  End;
+
+  Procedure VIEW_SYSOPLOG;
+
+  TYPE
+     BigArray = ARRAY [1..800] OF LSTR;
+
+  VAR
+     Big   : ^BigArray;
+     L     : LogREC;
+     Total : Word;
+     N     : Integer;
+
+    Function LookUpSysLogDat (M,S : Integer) : Integer;
+    VAR CNT : Integer;
+    BEGIN
+      For CNT := 1 to NumSysLogDat DO WITH SysLogDat[cnt] DO
+        IF (Menu=M) AND (Subcommand=S) Then Begin
+          Lookupsyslogdat:=cnt;
+          Exit
+        End;
+      Lookupsyslogdat:=0
+    END;
+
+    Function FirstEntry : Boolean;
+    BEGIN
+      FirstEntry := (L.Menu=0) and (L.SubCommand in [1..2])
+    END;
+
+    Procedure BackUP;
+    BEGIN
+      While N<>0 DO BEGIN
+        Dec(N);
+        Seek (logfile,n);
+        Read (logfile,l);
+        If FirstEntry Then EXIT
+      END;
+      N := -1
+    END;
+
+    Function Get_Line : LSTR;
+    VAR Q:Lstr;
+        P:Integer;
+    BEGIN
+      If L.SubCommand > 0
+        Then Q := SyslogDat[lookupsyslogdat(l.menu,l.subcommand)].text
+        Else Q := L.Param;
+      P := POS('%',q);
+      if P <> 0 Then Q := Copy(q,1,p-1) + L.PARAM + Copy(q,p+1,255);
+      If FirstEntry THEN BEGIN
+        If TOTAL > 1 THEN BEGIN
+          Big^[TOTAL][0] := #0;
+          INC(TOTAL);
+        END;
+        Q := 'úÄÄ ' + Q + ' on ' + DateSTR(L.When) + ' at ' + TimeSTR(L.When)
+      END
+      ELSE
+        Q := #32#32#32#32 + TimeStr(L.WHEN) + ': ' + Q;
+      GET_LINE := Q;
+    End;
+
+    Procedure Load_Log;
+    VAR S : LSTR;
+        B : BOOLEAN;
+    BEGIN
+      Total := 0;
+      N := FileSIZE(LogFILE);
+      REPEAT
+        BackUP;
+        IF N = -1 THEN EXIT;
+        Seek(LogFILE,N);
+        Read(LogFile,L);
+        INC(TOTAL);
+        IF TOTAL >= 800
+          THEN EXIT;
+        S := GET_LINE;
+        Big^[TOTAL] := S;
+        B := FALSE;
+        WHILE NOT (EoF(Logfile) or B) DO BEGIN
+          Read (Logfile,L);
+          B := FirstEntry;
+          IF NOT B THEN BEGIN
+            INC(TOTAL);
+            IF TOTAL >= 800
+              THEN EXIT;
+            S := GET_LINE;
+            Big^[TOTAL] := S;
+          END
+        END;
+      UNTIL 0=1;
+    END;
+
+    Procedure UpdateLine(Cur:Word);
+    BEGIN
+      GotoXY(60,25);
+      TextATTR := 49;
+      Write(USR,'Line '+Strr(Cur) + ' of ' + Strr(Total) + #32);
+    END;
+
+    Procedure Init_Screen;
+    Var Y : Byte;
+    Begin
+      Window(1,1,80,25);
+      For Y := 3 to 24 Do Begin
+        GotoXY(1,Y);
+        TEXTATTR := 30;
+        ClrEOL;
+      End;
+      GotoXY(1,4);
+      Writeln(USR,'Loading SysOp Log.. One Moment..');
+      GotoXY(1,25);
+      TEXTATTR := 48;
+      ClrEOL;
+      Write(USR,' Log Viewer ³ Up/Dn/PgUp/PgDn Moves ³ ESC Exits Viewer ³ ');
+    End;
+
+    Procedure Draw_Some (Current:Word);
+    VAR X, Start, Finish : Word;
+    BEGIN
+      START    := Current;
+      FINISH   := Start + 21;
+      UpdateLine(Current);
+      GotoXy(1,3);
+      For X := START TO FINISH DO BEGIN
+        IF X <= TOTAL THEN BEGIN
+          If POS('úÄÄ',Big^[x]) = 1
+            THEN TextAttr := 30
+            ELSE TextAttr := 31;
+          Write(USR,Big^[x]);
+        END;
+        ClrEOL;
+        Writeln(USR);
+      END;
+    END;
+
+    Procedure DO_KEYS;
+    VAR K : CHAR;
+        X : INTEGER;
+    BEGIN
+      K := #0;
+      X := 1;
+      Draw_Some(X);
+      REPEAT
+        K := #0;
+        IF CARRIER THEN EXIT;
+        If KeyPRESSED THEN
+          K := BiOSKEY;
+        CASE K OF
+          #200 : IF X>1 THEN BEGIN
+                   Dec(X);
+                   Draw_Some(X);
+                 END;
+          #208 : IF X<TOTAL THEN BEGIN
+                   Inc(X);
+                   Draw_Some(X);
+                 END;
+          #209 : IF X<TOTAL THEN BEGIN
+                   IF (X+20) > TOTAL
+                     THEN X := TOTAL
+                     ELSE Inc(X,20);
+                   Draw_Some(X);
+                 END;
+          #201 : IF X>1 THEN BEGIN
+                   IF (X-20) > 0
+                     THEN Dec(X,20)
+                     ELSE X := 1;
+                   Draw_Some(X);
+                 END;
+          #199 : BEGIN
+                   X := 1;
+                   Draw_Some(X);
+                 END;
+          #207 : BEGIN
+                   X := TOTAL;
+                   Draw_Some(X);
+                 END;
+        END;
+      UNTIL K = #27;
+    END;
+
+  BEGIN
+    Dos_GetMEM(Big,SizeOf(Big^));
+    Init_Screen;
+    Load_LOG;
+    Do_KEYS;
+    Dos_FreeMEM(Big);
+  END;
+
+  Procedure Execute(D0S:Boolean);
+  Var S   : Sstr;
+      St  : Word;
+      Str : Lstr;
+  Begin
+    TextMode(CO80);
+    Window (1,1,80,25);
+    ClrScr;
+    If D0S Then Begin
+      TextMode(Co80);
+      Writeln(usr,'Type in <EXIT> to return to ViSiON/2');
+      ExecuteWithSwap('','',False);
+      Str := Cfg.VisionDir;
+      If Str[ Length(Str) ] = '\'
+        Then Str[0] := Pred(Str[0]);
+      Chdir(str);
+    End Else
+      ExecuteWithSwap('CONFIG.EXE','',False);
+  End;
+
+    Function Menu : Byte;
+
+    Const Name:Array [1..12] Of String[21] =
+          (' Login to BBS        ',' <Reserved>           ',' Read E-Mail         ',' Read Feedback       ',
+           ' <Reserved>          ',' <Reserved>          ',' Run Config          ',
+           ' Shell to DOS        ',' <Reserved>          ',' Return to WFC       ',' Exit ViSiON/2       ',
+           ' View SysOp Log      ');
+      X = 31;
+
+   VAR I:Byte;
+       Finished:Boolean;
+
+    Procedure PlaceBar(X,Y:Byte;Hi:Boolean);
+    BEGIN
+      If Hi then TextAttr:=5*16+15 Else TextAttr:=31;
+      GotoXY(X,I + 5);
+      Write (usr,Name[i]);
+    END;
+
+  BEGIN
+    I:=1;
+    Finished:=False;
+    PlaceBar(X,i,True);
+    Cursor(False);
+    { XYString(8,1,TimeStr(Now),15,1);
+     XYString(23,1,DateStr(Now),15,1); }
+    REPEAT
+      CASE BiosKey OF
+      #128,#200:Begin       {UP}
+             PlaceBar(x,i,false);
+             Dec(i);
+             If I <= 0
+               Then I := 12;
+             PlaceBar(x,i,true);
+           End;
+      #129,#208:Begin       {DOWN}
+           PlaceBar(x,i,False);
+           inc(i);
+           IF i>=13 Then i:=1;
+           PlaceBar(x,i,true);
+           End;
+      #133,#13: Begin
+           Menu:=i;
+           Finished:=True;
+           End;
+      #27: Begin TextAttr:=1; ClrScr; Menu:=10; Finished:=True; End;
+      End;
+      { XyString(8,1,TimeStr(Now),15,1);
+        XYString(23,1,DateStr(Now),15,1); }
+    UNTIL Finished;
+    Cursor(True);
+    { If Cfg.WFCHiRes Then TextMode(Co80+Font8x8); }
+  END;
+
+  Procedure SendStringtoModem;
+  VAR s:String;
+  BEGIN
+    Window(15,7,50,19);
+    Writeln(usr,'[ Send Modem String ]');
+    Gotoxy(1,1);
+    Writeln(usr,'Enter string to send to modem');
+    Write(usr,'> '); ReadLn(usr,s);
+    If s>'' then Begin
+      If s[length(s)]<>'|' then s:=s+'|';
+      sendmodemstr(s,true);
+    End;
+  END;
+
+  Procedure MakeAccount;
+  Begin
+    unum:=1;
+    readurec;
+    urec.timetoday:=9999;
+    local:=true;
+    logontime:=timer;
+    UseBottom:=Cfg.DefBottomLine;
+    { TextMode(co80); }
+    InitWinds;
+{    Case UseBottom Of
+      0:SetScreen(80,25);
+      1,2:SetScreen(80,24);
+      3:Begin
+         TextMode(Co80+Font8x8);
+         SetUpBottom;
+        End;
+    End; }
+    Bottomline;
+  End;
+
+  Procedure UnDoAccount;
+  Begin
+    unum:=-1;
+    ulvl:=-1;
+    unam[0]:=#0;
+    FillChar(Urec,SizeOf(Urec),0);
+    local:=false;
+    logontime:=timer;
+    logofftime := timer + 999;
+  End;
+
+  Procedure OffHook;
+  Begin
+    ClrScr;
+    DefYes:=True;
+    MakeAccount;
+    WriteStr('Go Off Hook? !');
+    If Not Yes
+    Then Begin
+      DontAnswer;
+      Exit;
+    End;
+    If Cfg.OffHookStr<>'' Then
+    SendModemStr(Cfg.OffHookStr,True)
+    Else Begin
+     Sendchar('A');
+     Delay(20);
+     Sendchar('T');
+     Delay(20);
+     Sendchar('H');
+     Delay(20);
+     Sendchar('1');
+     Delay(20);
+     Sendchar(' ');
+     Delay(20);
+     Sendchar('M');
+     Delay(20);
+     Sendchar('0');
+     Delay(20);
+     Sendchar(#13);
+     delay(100);
+    End;
+  End;
+
+var k:char;
+    a:byte;
+    T,Temp:Integer;
+    O : Mstr;
+label exit,Xfer;
+Begin
+
+  multitaskername[0]:=#0;
+
+  Case MultiTasker of
+    None         : Begin MultiTasking := FALSE; multitaskername:='None Detected'; End;
+    DESQview     : multitaskername:='DESQview v'+Strr(Hi(MulVersion))+'.'+Strr(Lo(MulVersion));
+    WinEnh       : multitaskername:='Windows v3.'+Strr(Lo(MulVersion))+' Enhanced';
+    OS2          : multitaskername:='OS/2 v'+Strr(Hi(MulVersion))+'.'+Strr(Lo(MulVersion));
+    DoubleDOS    : multitaskername:='DoubleDOS';
+    TopView      : Begin
+                     If MulVersion <> 0 then
+                        multitaskername:='TopView v'+Strr(Hi(MulVersion))+'.'+Strr(Lo(MulVersion))
+                     Else
+                        multitaskername:='TaskView or Compatible';
+                   end;
+    Win386       : multitaskername:='Windows 386 v2.xx';
+    TaskSwitcher : multitaskername:='DOS 5.0 Task Switcher or Compatible';
+    WinStandard  : multitaskername:='Windows (Real or Standard)';
+  End;
+
+  FileConf:=1;
+  MsgConf:=1;
+  CheckKermie;
+  waitforacall:=false;
+  setparam (cfg.usecom,cfg.defbaudrate,false);
+  Writeln;
+  OverRide[0] := #0;
+
+  For A := 1 To ParamCount do Begin
+    If UpString(ParamStr(A)) = '/X'
+    Then Begin
+      If Carrier = False
+        Then Begin
+          TextAttr := 9;
+          ClrScr;
+          Writeln(Usr,'/X Parameter Active - No Carrier Detected (Halting)');
+          EnsureClosed;
+          Halt(0);
+        End
+    End Else
+{    If UpString(ParamStr(A)) = '/N'
+      Then Do_Net_Mail; }
+  End;
+
+  If Carrier Then Begin
+    O[0] := #0;
+    If Paramcount > 0 Then Begin
+      O := ParamStr(1);
+      If O[1] = '/'
+        Then OverRide := O;
+    End;
+    Cursor(true);
+    ReceiveCall(True);
+    If Carrier
+      Then Goto Exit;
+  End;
+
+  { If NumChars<1 Then
+  Fossil_Nuke_Input(Cfg.UseCom);
+  Fossil_Nuke_Output(Cfg.UseCom);
+  }
+
+  Setupmodem;
+
+{  If Cfg.WFCHiRes
+    Then TextMode(C80+Font8x8)
+    Else }
+
+  TextMode(co80);
+  starttimer (status.numminsidle);
+  local:=false;
+  SaveScreen:=False;
+  TextAttr:=1;
+  CLRSCR;
+  Switch := True;
+  Repeat
+    DoAnswer;
+    mustgetbaud:=true;
+    OverRide[0] := #0;
+
+    K := StatusScreen;
+
+    if Carrier then begin
+      Cursor(True);
+      Receivecall(OverRide > '');
+      if carrier then goto exit;
+    end;
+
+    Case Ord ( K ) - 128 of
+      59:Begin
+          cursor(false);
+          { TextMode(Co80); }
+          DrawWFCScreen3;
+          A:=Menu;
+          Case A Of
+            1:BEGIN
+               TextMode(co80);
+               cursor(true);
+               Color(15,0);
+               local:=true;
+               online:=false;
+               status.newfeedback:=0;
+               status.newuploads:=0;
+               status.newdownloads:=0;
+               status.newcalls:=0;
+               status.newposts:=0;
+               status.newmail:=0;
+               writestatus;
+               connectstr:='Local Login';
+               connectbaud:=19200;
+               OffHook;
+               goto exit
+              END;
+            2:BEGIN
+               cursor(true);
+               Color(15,0);
+               makeaccount; clrscr;
+               offhook;
+               { NOTHING HERE }
+               UnDoAccount;
+              END;
+            3:BEGIN
+               cursor(true);
+               Color(15,0);
+               makeaccount; clrscr;
+               offhook;
+               if init_email then
+                 mailread(false);
+               UndoAccount;
+              END;
+            4:BEGIN
+               cursor(true);
+               Color(15,0);
+               makeaccount;
+               offhook;
+               if init_feedback then
+                 quickfeedbackread(false);
+               clrscr;
+               UnDoAccount;
+              END;
+            5:BEGIN
+               cursor(true);
+               Color(15,0);
+               makeaccount; clrscr;
+               offhook;
+               { NOTHING HERE }
+               UnDoACcount;
+             END;
+            6:BEGIN
+               cursor(true);
+               Color(15,0);
+               makeaccount; clrscr;
+               offhook;
+               { NOTHING HERE }
+               UnDoAccount;
+              END;
+            7:BEGIN
+               cursor(true);
+               Color(15,0);
+               dontanswer;
+               Execute(false);
+              END;
+            8:BEGIN
+               cursor(true);
+               Color(15,0);
+               dontanswer;
+               Execute(true);
+             END;
+            {9:Do_Net_Mail;}
+           11:Begin Cursor(True); TextAttr := 1; OffHook; ExitProg; End;
+           10:Begin End;
+           12:View_SysOpLog;
+          END;
+          Color(0,7);
+          { If (A in [2..8]) and (Cfg.WFCHiRes) then TextMode(C80+Font8x8); }
+          If A in [2..7] then SetUpModem;
+         End;
+      62:begin
+           cursor(true);
+           local:=false;
+           online:=false;
+           writestatus;
+           waitforacall:=true;
+           goto exit
+         end;
+      60:Begin
+           Cursor(true);
+           TextAttr := 1;
+           OffHook;
+           Exitprog;
+         End;
+      61:Switch := Not Switch;
+      63:SendModemStr('  ATA|',true);
+      64:Execute(True);
+    End;
+  Until 0 = 1;
+  EXiT:
+  TextMode(CO80);
+  textattr := 9;
+  Window (1,1,80,25);
+  CLRSCR
+End;
+
+Begin
+End.

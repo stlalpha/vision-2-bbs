@@ -1,0 +1,1396 @@
+{$V-,I-,B-,R-}
+{$M 65000,5000,35000}
+
+Program NewConfig;
+
+Uses Dos,Crt,GenTypes,Configrt,General,Fastttt5,Winttt5,Iottt5,KeyTTT5;
+
+{$R-,S+,I-,F-,V-,B-}
+
+Type BarNames = Record
+       Total : Byte;
+       Name  : Array[1..25] of Mstr;
+     End;
+
+     ScreenType = Array[0..7999] of Byte;
+
+Var Bar : BarNames;
+    ScreenAddr : ScreenType Absolute $B800:$0000;
+
+Procedure WriteConfig;
+VAR C:File Of ConfigSetType;
+Begin
+  ASSIGN(C,'CONFIG.BBS');
+  Rewrite(C);
+  Write(C,Cfg);
+  Close(C);
+End;
+
+Function Bioskey:Char;
+var r:registers;
+begin
+  r.ah:=0;
+  intr ($16,r);
+  if r.al=0
+    then bioskey:=chr(r.ah+128)
+    else bioskey:=chr(r.al)
+end;
+
+Procedure UnCrunch (var Addr1,Addr2; BlkLen:Integer);
+Begin
+  InLine
+   ($1E/$C5/$B6/Addr1/$C4/$BE/Addr2/$8B/$8E/BlkLen/$8B/$D7/
+    $B4/$00/$AC/$3C/$10/$73/$07/$80/$E4/$F0/$0A/$E0/$EB/$44/
+    $3C/$18/$74/$13/$73/$19/$2C/$10/$02/$C0/$02/$C0/$02/$C0/
+    $02/$C0/$80/$E4/$0F/$0A/$E0/$EB/$2D/$81/$C2/$A0/$00/$8B/
+    $FA/$EB/$25/$3C/$1A/$75/$0B/$AC/$49/$51/$32/$ED/$8A/$C8/
+    $AC/$EB/$0D/$90/$3C/$19/$75/$11/$AC/$51/$32/$ED/$8A/$C8/
+    $B0/$20/$0B/$C9/$74/$03/$AB/$E2/$FD/$59/$49/$AB/$0B/$C9/
+    $74/$02/$E2/$AA/$1F);
+End;
+
+procedure formatconfig;
+var Cnt : Integer;
+    X : Byte;
+begin
+  cfg.versioncode:=thisversioncode;
+  cfg.longname:='Countdown To Chaos';
+  cfg.shortname:='Countdown To Chaos';
+  cfg.sysopname:='Crimson Blade';
+  Cfg.BoardPhone:='';
+  getdir (0,cfg.visiondir);
+  if cfg.visiondir[length(cfg.visiondir)]<>'\'
+    then cfg.visiondir:=cfg.visiondir+'\';
+  cfg.textdir:=cfg.visiondir+'TEXT\';
+  cfg.uploaddir:=cfg.visiondir+'WORK\';
+  cfg.boarddir:=cfg.visiondir+'BOARDS\';
+  cfg.overlaypath[0]:=#0;
+  cfg.textfiledir:=cfg.visiondir+'MENUS\';
+  cfg.doordir:=cfg.visiondir+'DOORS\';
+  cfg.DataDir:=cfg.visiondir+'DATA\';
+  Cfg.ExtractDir:=Cfg.visiondir+'EXTRACT\';
+  Cfg.MenuDir := Cfg.VisionDir + 'MENUDATA\';
+  cfg.MaxDosShell:=True;
+  cfg.UseEms:=True;
+  cfg.modemsetupstr:='ATX6HM0S0=1|';
+  cfg.modemhangupstr:='+++~~~ATH|';
+  cfg.modemdialprefix:='ATDT';
+  cfg.modemdialsuffix:='|';
+  Cfg.OffHookStr:='ATH1 M0|';
+  cfg.defbaudrate:=19200;
+  cfg.usecom:=1;
+{  cfg.hashayes:=false; }
+  cfg.anonymouslevel:=5;
+  cfg.numwelcomes:=1;
+  cfg.numstats:=1;
+  cfg.numprelogon:=1;
+  cfg.mintimeout:=5;
+  cfg.sysoplevel:=1000;
+  cfg.deflevel:=25;
+  cfg.defudratio:=25;
+  cfg.defudkratio:=25;
+  cfg.defpcr:=25;
+  cfg.defmsglength:=30;
+  Cfg.DefFlags[0]:=#0;
+  cfg.defdailykblimit:=5000;
+  cfg.defudlevel:=0;
+  cfg.defudpoints:=0;
+  cfg.uploadfactor:=5;
+  cfg.private:=false;
+  cfg.autologin:=false;
+  cfg.useconmode:=true;
+  cfg.escinmsgs:=false;
+  cfg.bkspinmsgs:=true;
+  cfg.requiredforms:='15';
+  cfg.nuvform:=5;
+  cfg.Infoformstr[1]:='New User Application';
+  cfg.Infoformstr[2]:='';
+  cfg.Infoformstr[3]:='';
+  cfg.Infoformstr[4]:='';
+  cfg.Infoformstr[5]:='New User Voting Form';
+  For Cnt:=1 to 5 do Cfg.Infoformlvl[Cnt] := 0;
+  Cfg.DotChar:='ש';
+  cfg.supportedrates:=[b2400,b4800,b9600,b19200];
+  cfg.downloadrates:=cfg.supportedrates;
+  cfg.availtime:='10:00 am';
+  cfg.unavailtime:='10:00 pm';
+  cfg.xmodemopentime:='3:00 am';
+  cfg.xmodemclosetime:='3:00 am';
+  for cnt:=1 to 100 do cfg.usertime[cnt]:=60;
+  cfg.level2nd:=1;
+  cfg.udlevel2nd:=0;
+  cfg.logonlevel:=5;
+{  cfg.postlevel:=2; }
+  cfg.anonymousstr:='[ Anonymous ]';
+  cfg.systempassword:='Change This';
+  cfg.remotedoors:=false;
+  cfg.allowdoors:=true;
+  cfg.eventtime[0]:=#0;
+  cfg.eventbatch[0]:=#0;
+  cfg.directvideomode:=true;
+  cfg.checksnowmode:=true;
+  cfg.matrixtype:=2;
+{  cfg.mtrx1:='1'; cfg.mtrx2:='2'; cfg.mtrx3:='3';
+  cfg.mtrx4:='4'; cfg.mtrx5:='5'; cfg.mtrx6:='6'; }
+  cfg.defcolor1:=3;
+  cfg.defcolor2:=11;
+  cfg.defcolor3:=9;
+  cfg.defcolor4:=5;
+  cfg.defcolor5:=1;
+  cfg.defcolor6:=13;
+  cfg.defcolor7:=31;
+  cfg.lowbaudpassword:='!Get Lost!';
+  cfg.newuserpassword:='';
+  cfg.sysopmenupassword:='Change This';
+  cfg.dospassword:='Change This';
+  cfg.UseRumors:=2;
+  cfg.RumChar:='  ';
+{  cfg.UseQuotes:=2;
+  cfg.ForDayStr:='Quote'; }
+  cfg.UseThisDay:=2;
+  cfg.ZipComment:=True;
+  cfg.ZipFileAdd:='C2C.ADD';
+  cfg.DSZLOG:=CFG.ViSiONDiR+'XFER';
+  cfg.KPerPoint:=100;
+  cfg.PointCommision:=1;
+  cfg.TimepercentBack:=50;
+  cfg.MinFreeSpace:=250;
+  cfg.ExemptLevel:=99;
+  cfg.UseBox:=True;
+  cfg.BoxChar:='°';
+  Cfg.BoxAbort:='Aborted!!';
+  Cfg.FilterQuote:=True;
+  Cfg.PercentLocal:=20;
+  Cfg.UseNUV:=True;
+  Cfg.AutoADDNuv:=True;
+  Cfg.NUVUseLevel:=25;
+  Cfg.NuvY:=10;
+  Cfg.NuvN:=10;
+  Cfg.NUVKill:=True;
+  Cfg.NuvValidate:=True;
+  Cfg.NuvLevel:=25;
+  Cfg.NuvUDLevel:=25;
+  Cfg.NUVPoints:=5;
+{  Cfg.NetStc:='3:00 am';
+  Cfg.NetEnc:='3:00 am';
+  Cfg.NetPassword:='Phiber';
+  Cfg.NetStart:='3:00 am';
+  Cfg.NetEnd:='3:00 am'; }
+  Cfg.NetName:='BLiTZMail';
+{  Cfg.NetAcr:='BLiTZMail'; }
+  Cfg.ChangeNote:=True;
+  Cfg.cc[1]:=1;
+  Cfg.cc[2]:=9;
+  Cfg.cc[3]:=5;
+  Cfg.cc[4]:=13;
+  Cfg.cc[5]:=5;
+  Cfg.cc[6]:=9;
+  Cfg.cc[7]:=1;
+  Cfg.cc[8]:=8;
+  Cfg.WfcHiRes:=True;
+{  Cfg.MainMenuStr:='Main';
+  Cfg.FileMenuStr:='Xfer''s';
+  Cfg.MsgMenuStr:='Message';
+  Cfg.RumorMenuStr:='One-Liners';
+  Cfg.BBSMenuStr:='Boards List';
+  Cfg.QWkMenuStr:='QWK Support';
+  Cfg.NuvMenuStr:='New User Voting';
+  Cfg.Q4DayMenuStr:='Quote For The Day';
+  Cfg.MailMenuStr:='Post Office';
+  Cfg.DoorMenuStr:='Online Doors';
+  Cfg.QuickMenuStr:='Quick Jump'; }
+  Cfg.MaxMsgConf:=1;
+  Cfg.MaxFileConf:=1;
+{  Cfg.AskMsgConf:=False;
+  Cfg.AskFileConf:=False; }
+  Cfg.BarChar:='³³';
+  Cfg.FilePoint:='File Point';
+  Cfg.FilePoints:='File Points';
+  Cfg.ChatCost:=2;
+  Cfg.HangUpOnNew:=True;
+  Cfg.ScreenSave:=5;
+  Cfg.UseAutoAnswer:=True;
+  Cfg.AutoAnswerStr[0]:=#0;
+{  Cfg.UseLottery:=True;
+  Cfg.LotCost:=1;
+  Cfg.LotLevel:=10;
+  Cfg.LotChance:=10;
+  Cfg.LotWinnings:=100; }
+  Cfg.DefTopFive:=3;
+  Cfg.DefBottomline:=1;
+  Cfg.ExtractCost:=0;
+  cfg.fidoorigin[0]:=#0;
+  Cfg.DefUserNote := 'Regular User';
+  Cfg.NodeNum := 1;
+  Cfg.TotalNodes := 1;
+  Cfg.NodeDir[0] := #0;
+{  Cfg.InBuffer := 1024;
+  Cfg.OutBuffer := 1024; }
+  Cfg.LockDTE := True;
+  Cfg.Use_One_Liners := True;
+{  Cfg.Use_Fos := True; }
+  For X := 2 to 9
+    Do Cfg.LockRate[X] := 19200;
+  writeconfig
+end;
+
+{$I CONFIG.N}
+
+{$F+}
+Procedure Help_EditKeys(VAR Ch:Char;var Fieldid : byte;var Refresh: byte);
+var C1,C2,c3 : byte;
+    C:Char;
+begin
+   C1 := white;
+   C2 := yellow;
+   C3 := blue;
+    If Ch <> #187 then exit;
+    SaveScreen(1);
+    GrowFBox(15,1,65,25,c1,c3,2);
+    Mkwin(15,1,65,25,C1,c3,2);
+    WriteBetween(15,65,2,11,c3,'Greetings '+Cfg.SysopName+'!');
+    WriteAt(22,4,c2,c3,'ViSiON/2 "The Revision" Config v1.0b');
+    WriteAT(22,5,c2,c3,'A Production of Ruthless Enterprises');
+    WriteAT(22,7,c2,c3, 'Move Up      '+chr(024));
+    WriteAT(22,8,c2,c3, 'Move Down    '+chr(025));
+    WriteAT(22,9,c2,c3,'Move Right   Ctrl -'+chr(016)+', Tab or Enter');
+    WriteAT(22,10,c2,c3,'Move Left    Ctrl '+chr(017)+'- or ShiftTab');
+    WriteAT(22,12,c2,c3,'Insert       Press [Ins] to toggle');
+    WriteAT(22,14,c2,c3,'Del Char     [Del]  or  [Backspace]');
+    WriteAT(22,15,c2,c3,'Del Field    Alt-D');
+    WriteAT(22,16,c2,c3,'Del Global   Alt-E');
+    WriteAT(22,18,c2,c3,'* SAVES      F10');
+    WriteAT(22,19,c2,c3,'* Aborts     [Esc]');
+    WriteAT(19,21,c2,c3,'ALL Fields include a short definition of');
+    WriteAT(19,22,c2,c3,'what the field is used for, but there are');
+    WriteAT(19,23,c2,c3,'extended descriptions in the DOC''s if needed');
+    C:=GetKey;
+    CH:=#0;
+    Rmwin;
+    SlideRestoreScreen(1,down);
+    DisposeScreen(1);
+end;
+{$F-}
+
+Procedure Init(A:Byte);
+VAR X:Byte;
+Begin
+  Create_Fields(A);
+  Allow_Beep(False);
+  Allow_Esc(True);
+  Assign_CharHook(Help_EditKeys);
+  Define_Colors(15,4,14,0,15,1);
+  Add_Field(1,Bar.Total,2,Bar.Total,2,32,4);
+  For X:=2 to Bar.Total-1 Do Add_Field(X,X-1,X+1,X-1,X+1,32,X+3);
+  Add_Field(Bar.Total,Bar.Total-1,1,Bar.Total-1,1,32,Bar.Total+3);
+End;
+
+Procedure SetUpScreen(Name:Mstr);
+VAR X:Byte;
+Begin
+  GrowMkWin(1,3,80,Bar.Total+4,8,0,1);
+  WriteAT(3,3,8,0,'[');
+  WriteAT(4,3,15,0,Name);
+  WriteAT(Length(Name)+4,3,8,0,']');
+  WriteAt(55,3,8,0,'[');
+  WriteAt(56,3,15,0,'ESC: Abort; F10: Saves');
+  WriteAt(78,3,8,0,']');
+  For X:=1 to Bar.Total Do Begin
+    WriteAt(4,X+3,8,0,'[');
+    WriteAt(6,X+3,9,0,Bar.Name[X]);
+    writeat(30,X+3,8,0,']');
+  End;
+End;
+
+Procedure DoPage1;
+VAR X:Byte;
+Begin
+  Bar.Name[1]:='BBS Name';         Bar.Name[2]:='Short BBS Name';
+  Bar.Name[3]:='BBS Phone Number'; Bar.Name[4]:='Your Name/Alias';
+  Bar.Name[5]:='SysOp Auto-Login'; Bar.Name[6]:='High Resolution WFC';
+  Bar.Name[7]:='Private BBS';
+  Bar.Name[8]:='Largest % Of Local Users';
+  Bar.Name[9]:='Direct Video Write';
+  Bar.Name[10]:='Snow Filtering';   Bar.Name[11]:='Output to DOS Con';
+  Bar.Name[12]:='SysOp Available Start'; Bar.Name[13]:='SysOp Available End';
+  Bar.Name[14]:='Load ViSiON/2 in EMS';  Bar.Name[15]:='Use Maiximum DOS Shell';
+  Bar.Name[16]:='WFC Screen Save Minutes';
+  Bar.Total:=16;
+  Init(16);
+  SetUpScreen('System Specifications');
+  String_Field(1,Cfg.Longname,Replicate(48,'*'));
+  String_Field(2,Cfg.ShortName,Replicate(30,'*'));
+  String_Field(3,Cfg.BoardPhone,'(###)###-####');
+  String_Field(4,Cfg.SysopName,Replicate(30,'*'));
+  Boolean_Field(5,Cfg.AutoLogin,'*');
+  Boolean_Field(6,Cfg.WFCHiRes,'*');
+  Boolean_Field(7,Cfg.Private,'*');
+  Byte_Field(8,Cfg.PercentLocal,'###',0,100);
+  Boolean_Field(9,Cfg.DirectVideoMode,'*');
+  Boolean_Field(10,Cfg.CheckSnowMode,'*');
+  Boolean_Field(11,Cfg.UseConMode,'*');
+  String_Field(12,Cfg.AvailTime,Replicate(8,'*'));
+  String_Field(13,Cfg.UnAvailTime,Replicate(8,'*'));
+  Boolean_Field(14,Cfg.UseEMS,'*');
+  Boolean_Field(15,Cfg.MaxDosShell,'*');
+  Byte_Field(16,Cfg.ScreenSave,'',0,255);
+  Add_Message(1,1,25,'This is the FULL Name of your BBS');
+  Add_Message(2,1,25,'This is a shorter version of the name of your BBS');
+  Add_Message(3,1,25,'This is the telephone number for your BBS');
+  Add_Message(4,1,25,'Put your Name/Alias here');
+  Add_Message(5,1,25,'Do wish a FAST Login when you press F10 from WFC?');
+  Add_Message(6,1,25,'Uses High Resolution Screen or 25 Lines Normal Screen');
+  Add_Message(7,1,25,'Is your BBS currently accepting New User Applications?');
+  Add_Message(8,1,25,'Largest Percent of Local Users allowed on your system');
+  Add_Message(9,1,25,'If Yes, Screen writes are faster, but may disrupt multitasking');
+  Add_Message(10,1,25,'If you are experiencing video snow, set this option to No.');
+  add_Message(11,1,25,'If Yes, ANSI.SYS will work, but colors may not. Usually No.');
+  Add_Message(12,1,25,'The starting time that you are available for chat call');
+  Add_Message(13,1,25,'The ending time that you are available for chat call');
+  Add_Message(14,1,25,'Do you want ViSION/2 to take advantage of extended memory?');
+  Add_Message(15,1,25,'Swap ViSiON/2 to EMS/Disk when shelling from program?');
+  Add_Message(16,1,25,'Minutes Before WFC Screen Saver (0 = Don''t Use)');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage2;
+VAR X:Byte;
+Begin
+  Bar.Name[1]:='Mail Storage Directory';
+  Bar.Name[2]:='Message Base Directory';
+  Bar.Name[3]:='NET/QWK Work Directory';
+  Bar.Name[4]:='Text Files Directory';
+  Bar.Name[5]:='Door Info Directory';
+  Bar.Name[6]:='ViSiON/2 Data Directory';
+  Bar.Name[7]:='Extraction Directory';
+  Bar.Name[8]:='Menus Directory';
+  Bar.Name[9]:='ViSiON/2 Main Directory';
+  Bar.Name[10] := '1200 Baud Locked Rate';
+  Bar.Name[11] := '2400 Baud Locked Rate';
+  Bar.Name[12] := '4800 Baud Locked Rate';
+  Bar.Name[13] := '9600 Baud Locked Rate';
+  Bar.Name[14] := '19200 Baud Locked Rate';
+  Bar.Name[15] := '38400 Baud Locked Rate';
+  Bar.Name[16] := '57600 Baud Locked Rate';
+  Bar.Total:=16;
+  SetUpScreen('ViSiON/2 Directories');
+  Init(16);
+  String_Field(1,Cfg.TextDir,Replicate(48,'!'));
+  String_Field(2,Cfg.BoardDir,Replicate(48,'!'));
+  String_Field(3,Cfg.UploadDir,Replicate(48,'!'));
+  String_Field(4,Cfg.TextFileDir,Replicate(48,'!'));
+  String_Field(5,Cfg.DoorDir,Replicate(48,'!'));
+  String_Field(6,Cfg.DataDir,Replicate(48,'!'));
+  String_Field(7,Cfg.ExtractDir,Replicate(48,'!'));
+  String_Field(8,Cfg.MenuDir,Replicate(48,'!'));
+  String_Field(9,Cfg.VisionDir,Replicate(48,'!'));
+  For X := 2 to 8 Do
+    Word_Field(X + 8,Cfg.LockRate[X],'*****',1200,57600);
+  Add_Message(1,1,25,'All Message Base Files are stored in this directoty');
+  Add_Message(2,1,25,'All Sub-Board information is held in this directory');
+  Add_Message(3,1,25,'NET Files will be handled in this directory');
+  Add_Message(4,1,25,'All Menus/Status Screen/Infoforms go in this directory');
+  Add_Message(5,1,25,'All Door Information is held in this directory');
+  Add_Message(6,1,25,'All ViSiON/2 Data Files are stored in this directory');
+  Add_Message(7,1,25,'This directory is used for extracting files');
+  Add_Message(8,1,25,'Where menu files are stored');
+  Add_Message(9,1,25,'Main ViSiON/2 Directory');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage3;
+VAR X:Byte;
+Begin
+  Bar.Name[1]:='Default Baud Rate';
+  Bar.Name[2]:='Com Port';
+  Bar.Name[3]:='Modem Init String';
+  Bar.Name[4]:='Modem Hang-Up Sting';
+  Bar.Name[5]:='Modem Pre-Dial String';
+  Bar.Name[6]:='Modem Post-Dial String';
+  Bar.Name[7]:='Off-Hook String';
+  Bar.Name[8]:='Using Auto-Answer?';
+  Bar.Name[9]:='Modem Answer String';
+  Bar.Name[10]:='Input Buffer Size';
+  Bar.Name[11]:='Output Buffer Size';
+  Bar.Name[12] := 'Lock DTE Upon Connect?';
+  Bar.Name[13] := 'Use Fossil Routines?';
+  Bar.Total:=13;
+  SetUpScreen('Modem Setup');
+  Init(13);
+  Word_Field(1,Cfg.DefBaudRate,'#####',1200,57600);
+  Integer_Field(2,Cfg.UseCom,'#',1,8);
+{  Boolean_Field(3,cfg.hashayes,'*'); }
+  String_Field(3,Cfg.ModemSetUpStr,replicate(48,'*'));
+  String_field(4,Cfg.ModemHangUpStr,Replicate(48,'*'));
+{  String_field(5,Cfg.ModemDialprefix,Replicate(48,'*'));
+  String_field(6,Cfg.ModemDialSuffix,Replicate(48,'*')); }
+  String_field(7,Cfg.OffHookStr,Replicate(48,'*'));
+  Boolean_Field(8,Cfg.UseAutoAnswer,'*');
+  String_Field(9,Cfg.AutoAnswerStr,Replicate(30,'*'));
+{  Integer_Field(10,Cfg.InBuffer,'',8,5000);
+  Integer_Field(11,Cfg.OutBuffer,'',8,5000); }
+  Boolean_Field(12,Cfg.LockDTE,'*');
+{  Boolean_Field(13,Cfg.Use_Fos,'*'); }
+  Add_Message(1,1,25,'Defualt System Baud Rate');
+  Add_Message(2,1,25,'Com Port your modem is connected to');
+{ Add_Message(3,1,25,'Put Yes if you have a Hayes Smartmodem'); }
+  Add_Message(3,1,25,'Sets Up Modem before calls |=CR, ~=pause, ^x=control-char');
+  Add_Message(4,1,25,'Hangs Up Modem |=CR, ~=pause, ^x=control-char');
+  ADd_Message(5,1,25,'Sent to modem before dialing  |=CR, ~=pause, ^x=control-char');
+  Add_Message(6,1,25,'Sent to modem after dialing  |=CR, ~=pause, ^x=control-char');
+  add_Message(7,1,25,'Sent to modem when you want to go off hook  (Blank=Internal)');
+  Add_Message(8,1,25,'Does Your Init String Invoke Auto-Answer Sequence?');
+  {Add_Message(10,1,25,'String Sent to Answer Phone if Auto-Answer IS NOT used');}
+  Add_Message(9,1,25,'DISABLED FOR NOW!');
+  Add_Message(10,1,25,'Size (Bytes) Of Modem Input Buffer');
+  Add_Message(11,1,25,'Size (Bytes) Of Modem Output Buffer');
+  Add_Message(12,1,25,'Lock DTE Rate when first connected? (Usually Yes)');
+  Add_Message(13,1,25,'Fossil or Internal Modem Routines (Fossil doesn''t support 57600)');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+  Procedure DoBaud(VAR NewBaud:BaudSet; Title:Mstr);
+  CONST Baud:Array[1..7] of String[5]=('1200','2400','4800','9600','19200','38400','57600');
+  VAR B,X,GlobalB:Baudratetype;
+      A:Byte;
+      K:Char;
+      Old:BaudSet;
+
+      Procedure PlaceBar(B:BaudRateType; HI:Boolean);
+      VAR C1,C2:Byte;
+      BEGIN
+        If Hi then Begin
+          C1:=15; C2:=1;
+        End Else Begin
+          C1:=1; C2:=7;
+        End;
+        If B>B300 Then
+        If B in NewBaud then WriteAt(32,A+5,4,7,'û ') Else WriteAt(32,A+5,4,7,'  ');
+        WriteAt(34,A+5,C1,C2,Baud[a]);
+      END;
+
+      Procedure SetBox;
+      BEGIN
+        GrowMkWin(30,4,70,13,0,7,1);
+        WriteAt(32,4,0,7,'['+Title+']');
+        WriteAt(40,6,5,7,'ENTER: Saves List and Exits');
+        WriteAt(40,7,5,7,'ESC: Aborts / Keeps Old Value');
+        WriteAt(40,8,5,7,'SPACE: Toggles Hi-lighted Baud');
+        WriteAT(40,9,5,7,'Up/Down Arrows Scroll');
+        a:=1;
+      END;
+
+    Procedure Changebaud(B:baudratetype);
+    Begin
+      IF b in NewBaud then
+      NewBaud:=NewBaud-[b]
+      Else NewBaud:=NewBaud+[b];
+      GlobalB:=B;
+    End;
+
+    BEGIN
+    Old:=NewBaud;
+    Setbox;
+      A:=0;
+      FOR X:=B1200 to B57600 DO Begin
+        Inc(A);
+        PlaceBar(X,False);
+        End;
+      A:=1;
+      PlaceBar(B1200,True);
+      Repeat
+        K:=ReadKey;
+        IF K=#80 Then Begin
+          PlaceBar(B300,False);
+          INC(a);
+          If A>7 then A:=1;
+          PlaceBar(B300,True);
+        END;
+        IF K=#72 Then Begin
+          PlaceBar(B300,False);
+          DEC(a);
+          If A<1 then A:=7;
+          PlaceBar(B300,True);
+        END;
+        IF K=#32 THEN Begin
+          CASE A OF
+            1:changebaud(b1200);
+            2:changebaud(b2400);
+            3:changebaud(b4800);
+            4:changebaud(b9600);
+            5:changebaud(b19200);
+            6:changebaud(b38400);
+            7:ChangeBaud(B57600);
+           END;
+          PlaceBar(GlobalB,False);
+          INC(a);
+          If A>7 then A:=1;
+          PlaceBar(B300,True);
+          END;
+        If k=#27 Then Begin
+          NewBaud:=Old;
+        End;
+      UNTIL K in [#13,#27];
+      RmWin;
+     End;
+
+Procedure DoColors;
+Const colorstr:array [0..15] of String[8]=
+  ('Black   ','Blue    ','Green   ','Cyan    ','Red     ','Purple  ','Brown   ','White    ',
+   'Gray    ','Hi Blue ','Hi Green','Hi Cyan ','Hi Red  ','Magenta ','Yellow  ','Hi White ');
+VAR X,A,B:Byte;
+    C:Array[1..15] of Byte;
+    Done:Boolean;
+    K:Char;
+
+     procedure doattrib(VAR Color:Byte);
+
+       function demo:integer;
+       var loc,hic:integer;
+           it:byte;
+           K:char;
+       begin
+         demo:=Color;
+         GrowMkWin(49,4,78,16,8,0,3);
+         WriteBetween(49,78,5,9,0,'Left/Right Arrow:');
+         WriteBetween(49,78,6,9,0,'Changes Forground');
+         WriteBetween(49,78,7,9,0,'Up/Down Arrow:');
+         WriteBetween(49,78,8,9,0,'Changes Background');
+         WriteBetween(49,78,9,9,0,'Enter: Change Color');
+         WriteBetween(49,78,10,11,0,'ESC: Aborts');
+         WriteAT(51,13,8,0,'On');
+         gotoxy(60,13);
+         for loc:=0 to 15 do begin
+           TextAttr:=loc+16;
+           write('Û');
+         end;
+         it:=color;
+         If It>15 then loc:=it Mod 16 else loc:=it;
+         hic:=(it shr 4) and 7;
+         repeat
+          gotoxy(60+loc,12);
+          TextAttr:=15;
+          write('');
+          gotoxy(60+hic,14);
+          write(chr(30));
+          gotoxy(50,12);
+          TextAttr:=loc;
+          if loc=0 then begin         { foreground }
+            textattr:=8;
+            write('Black   ');
+          end else write(colorstr[loc]);
+          gotoxy (50,14); textattr:=hic;
+          if hic = 0 then begin        { background }
+            textattr:=8;
+            write('Black   ');
+          end else write (colorstr[hic]);
+          textattr:=9;
+          k:=readkey;
+          if (k=#77) then begin
+            gotoxy(loc+60,12);write(' ');
+            loc:=loc+1;
+            if loc > 15 then loc:=0;
+          end else if (k=#75) then begin
+            gotoxy(loc + 60,12);write(' ');
+            loc:=loc - 1;
+            if loc < 0 then loc:=15;
+          end else
+          if k=#72 then begin
+            gotoxy(hic+60,14);write (' ');
+            hic:=hic + 1;
+            if hic > 7 then hic:=0;
+          end else if k = #80 then begin
+            gotoxy (hic+60,14);write (' ');
+            hic:=hic - 1;
+            if hic < 0 then hic:=7;
+          end;
+         until (k=#13) or (k=#27);
+         if k=#13 then demo:=(hic * 16) + loc else demo:=color;
+         rmwin;
+       end;
+
+  var cnt,v,back:integer;
+      k:char;
+  begin
+    v:=demo;
+    Color:=v;
+  end;
+
+   Procedure WriteColor(Hi:Boolean; Color:Integer);
+   VAR C1,C2:Byte;
+   BEGIN
+     If Hi then Begin
+       C1:=15;
+       C2:=4;
+     End Else Begin
+       C1:=Color and 15;
+       C2:=Color Shr 4;
+     End;
+     WriteAt(32,X+3,C1,C2,colorstr[Color and 15]+' on '+colorstr[(Color shr 4) and 7]);
+     C[X]:=Color;
+   END;
+
+Begin
+  Done:=False;
+  Bar.Name[1]:='Default User Color 1';  Bar.Name[2]:='Default User Color 2';
+  Bar.Name[3]:='Default User Color 3';  Bar.Name[4]:='Default User Color 4';
+  Bar.Name[5]:='Default User Color 5';  Bar.Name[6]:='Default User Color 6';
+  Bar.Name[7]:='Default User Color 7';  Bar.Name[8]:='Alternating Chat 1';
+  Bar.Name[9]:='Alternating Chat 2'; Bar.Name[10]:='Alternating Chat 3';
+  Bar.Name[11]:='Alternating Chat 4'; Bar.Name[12]:='Alternating Chat 5';
+  Bar.Name[13]:='Alternating Chat 6'; Bar.Name[14]:='Alternating Chat 7';
+  Bar.Name[15]:='Alternating Chat 8';
+  Bar.Total:=15;
+  setupscreen('Default Colors');
+  X:=1;
+  Writecolor(False,Cfg.DefColor1); X:=2;
+  WriteColor(False,Cfg.DefColor2); X:=3;
+  WriteColor(False,Cfg.DefColor3); X:=4;
+  WriteColor(False,Cfg.DefColor4); X:=5;
+  WriteColor(False,Cfg.DefColor5); X:=6;
+  WriteColor(False,Cfg.DefColor6); X:=7;
+  WriteColor(False,Cfg.DefColor7); X:=8;
+  For X:=8 to 15 Do WriteColor(False,Cfg.CC[X-7]);
+  X:=1;
+  WriteColor(True,Cfg.DefColor1);
+  Repeat
+  CASE BiosKey OF
+    #200:Begin       {UP}
+         WriteColor(false,C[X]);
+         dec(x);
+         IF x<=0 Then x:=15;
+         WriteColor(true,C[X]);
+         End;
+    #208:Begin       {DOWN}
+         Writecolor(False,C[X]);
+         inc(x);
+         IF x>=16 Then x:=1;
+         WriteColor(true,C[X]);
+         End;
+    #13: Begin
+          CASE X OF
+          1..15:DoAttrib(C[X]);
+          End;
+          WriteColor(true,C[x]);
+         End;
+    #187:Begin; K:=#187; Help_EditKeys(K,A,B); End;
+    #196:Begin
+           Cfg.DefColor1:=C[1];
+           Cfg.DefColor2:=C[2];
+           Cfg.DefColor3:=C[3];
+           Cfg.DefColor4:=C[4];
+           Cfg.DefColor5:=C[5];
+           Cfg.DefColor6:=C[6];
+           Cfg.DefColor7:=C[7];
+           For X:=8 to 15 Do Cfg.CC[X-7]:=C[X];
+          Done:=True;
+        End;
+    #27:Done:=True;
+    End;
+    UNTIL Done;
+    RmWin;
+End;
+
+Procedure DoPage4;
+Begin
+  Bar.Name[1]:='Default User Level';    Bar.Name[2]:='Default User File Level';
+  Bar.Name[3]:='Default File Points';   Bar.Name[4]:='Default UD Ratio';
+  Bar.Name[5]:='Default UD ''K'' Ratio';Bar.Name[6]:='Default Daily KB Limit';
+  Bar.Name[7]:='Default Post/Call Ratio';Bar.Name[8]:='Default Message Credit';
+  Bar.Name[9]:='Default Flag Setup';
+  Bar.Name[10]:='Default User Note';
+  Bar.Total:=10;
+  SetUpScreen('User Defaults');
+  Init(10);
+  Integer_Field(1,Cfg.DefLevel,'#####',0,32767);
+  Integer_Field(2,Cfg.DefUDLevel,'#####',0,32767);
+  Integer_Field(3,Cfg.DefUDPoints,'#####',0,32767);
+  Integer_Field(4,Cfg.DefUdRatio,'#####',0,32767);
+  Integer_Field(5,Cfg.DefUDkRatio,'#####',0,32767);
+  Integer_Field(6,Cfg.DefDailyKBLimit,'#####',0,32767);
+  Integer_Field(7,Cfg.DefPcr,'#####',0,32767);
+  Integer_Field(8,Cfg.DefMsgLength,'#####',0,32767);
+  String_Field(9,Cfg.DefFlags,Replicate(26,'@'));
+  String_Field(10,Cfg.DefUserNote,Replicate(30,'*'));
+  Add_Message(1,1,25,'Default User Main Level (Used when Quick Validating)');
+  Add_Message(2,1,25,'Default User File Level (Used when Quick Validating)');
+  add_Message(3,1,25,'Default User File Points');
+  Add_Message(4,1,25,'Default Required [P]ost [C]all [R]atio');
+  Add_Message(5,1,25,'Default Required Upload / Download Ratio');
+  Add_Message(6,1,25,'Default Required Upload / Download Kilobyte Ratio');
+  Add_Message(7,1,25,'Default Daily Kilobyte Download Limit');
+  Add_Message(8,1,25,'Default Minimum Message Length (by characters used)');
+  Add_Message(9,1,25,'Default Flags Setup');
+  Add_Message(10,1,25,'Default User Note');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage5;
+Begin
+  Bar.Name[1]:='Matrix Type';    {         Bar.Name[2]:='Matrix Login Command';
+  Bar.Name[3]:='Matrix Check Command';    Bar.Name[4]:='Matrix Apply Command';
+  Bar.Name[5]:='Matrix Feedback Command'; Bar.Name[6]:='Matrix Chat Command';
+  Bar.Name[7]:='Matrix Logoff Command'; }
+  Bar.Name[2]:='Hang Up On New Users?';
+  Bar.Total:=2;
+  SetUpScreen('Matrix Setup');
+  Init(2);
+  Byte_Field(1,Cfg.MatrixType,'##',0,2);
+{  String_Field(2,Cfg.Mtrx1,Replicate(13,'*'));
+  String_Field(3,Cfg.Mtrx2,Replicate(13,'*'));
+  String_Field(4,Cfg.Mtrx3,Replicate(13,'*'));
+  String_Field(5,Cfg.Mtrx4,Replicate(13,'*'));
+  String_Field(6,Cfg.Mtrx5,Replicate(13,'*'));
+  String_Field(7,Cfg.Mtrx6,Replicate(13,'*')); }
+  Boolean_Field(2,Cfg.HangUpOnNew,'*');
+  Add_Message(1,1,25,'Matrix Type (0=None / 1 = Configurable / 2 = Bar Matrix');
+{  Add_Message(2,1,25,'Matrix LOGON Command (If External Matrix is not found)');
+  Add_Message(3,1,25,'Matrix CHECK Access Command (If External Matrix is not found');
+  Add_Message(4,1,25,'Matrix APPLY for access Command (If External Matrix is not found');
+  Add_Message(5,1,25,'Matrix FEEDBACK Command (Blank = Not Used)');
+  Add_Message(6,1,25,'Matrix CHAT Command (Blank = Not Used)');
+  Add_Message(7,1,25,'Matrix LOGOFF Command (If External Matrix is not found)'); }
+  Add_Message(2,1,25,'If Yes, New Users will be hung up on after applying');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage6;
+Begin
+  Bar.Name[1]:='Required Infoforms'; Bar.Name[2]:='Description of Form 1';
+  Bar.Name[3]:='Description of Form 2'; Bar.Name[4]:='Description of Form 3';
+  Bar.Name[5]:='Description of Form 4'; Bar.Name[6]:='Description of Form 5';
+  Bar.Name[7]:='Minimum Level; Form 1'; Bar.Name[8]:='Minimum Level; Form 2';
+  Bar.Name[9]:='Minimum Level; Form 3'; Bar.Name[10]:='Minimum Level; Form 4';
+  Bar.Name[11]:='Minimum Level; Form 5';
+  Bar.Total:=11;
+  SetUpScreen('InfoForms Setup');
+  Init(11);
+  String_Field(1,Cfg.RequiredForms,'#####');
+  String_Field(2,Cfg.InfoFormStr[1],Replicate(48,'*'));
+  String_Field(3,Cfg.InfoFormStr[2],Replicate(48,'*'));
+  String_Field(4,Cfg.InfoFormStr[3],Replicate(48,'*'));
+  String_Field(5,Cfg.InfoFormStr[4],Replicate(48,'*'));
+  String_Field(6,Cfg.InfoFormStr[5],Replicate(48,'*'));
+  Integer_Field(7,Cfg.InfoFormlvl[1],'',0,32767);
+  Integer_Field(8,Cfg.InfoFormlvl[2],'',0,32767);
+  Integer_Field(9,Cfg.InfoFormlvl[3],'',0,32767);
+  Integer_Field(10,Cfg.InfoFormlvl[4],'',0,32767);
+  Integer_Field(11,Cfg.InfoFormlvl[5],'',0,32767);
+  Add_Message(1,1,25,'Required Info-forms, (Use #, 12345)');
+  Add_Message(2,1,25,'Information Form #1 Description');
+  Add_Message(3,1,25,'Information Form #2 Description');
+  Add_Message(4,1,25,'Information Form #3 Description');
+  Add_Message(5,1,25,'Information Form #4 Description');
+  Add_Message(6,1,25,'Information Form #5 Description');
+  Add_Message(7,1,25,'Minimum Level to Use Form #1');
+  Add_Message(8,1,25,'Minimum Level to Use Form #2');
+  Add_Message(9,1,25,'Minimum Level to Use Form #3');
+  Add_Message(10,1,25,'Minimum Level to Use Form #4');
+  Add_Message(11,1,25,'Minimum Level to Use Form #5');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage7;
+Begin
+  Bar.Name[1]:='Co-SysOp Level';   Bar.Name[2]:='Anonymous Level';
+  Bar.Name[3]:='BBS Logon Level'; { Bar.Name[4]:='Bulletin Post Level'; }
+  Bar.Name[4]:='2nd Call Access Level'; Bar.Name[5]:='2nd Call Xfer Level';
+  Bar.Total:=5;
+  SetUpScreen('Required Levels');
+  Init(5);
+  Integer_Field(1,Cfg.SysopLevel,'',0,32767);
+  Integer_Field(2,Cfg.AnonymousLevel,'',0,32767);
+  Integer_Field(3,Cfg.LogonLevel,'',0,32767);
+ { Integer_Field(4,Cfg.PostLevel,'',0,32767); }
+  Integer_Field(4,Cfg.Level2nd,'',0,32767);
+  Integer_Field(5,Cfg.UdLevel2nd,'',0,32767);
+  Add_Message(1,1,25,'Co-SysOp Level (Anything Above this Level is SysOp)');
+  Add_Message(2,1,25,'Lowest User Level that can leave a message anonymously');
+  Add_Message(3,1,25,'A User must have at least this level to login past the matrix');
+{ Add_Message(4,1,25,'A User must have at least this level to post a bulletin'); }
+  Add_Message(4,1,25,'A User''s level will be raised to this upon second call');
+  Add_Message(5,1,25,'A User''s File Level will be raised to this upon second call');
+  Process_Input(1);
+  Dispose_FIelds;
+  RmWin;
+End;
+
+Procedure DoPage8;
+Begin
+  Bar.Name[1]:='System Login Password'; Bar.Name[2]:='New User Password';
+  Bar.Name[3]:='Lockout Baud Password'; Bar.Name[4]:='SysOp Menu Password';
+  Bar.Name[5]:='Remote DOS Shell PW';
+  Bar.Total:=5;
+  SetUpScreen('System Password');
+  Init(5);
+  String_Field(1,Cfg.SystemPassword,Replicate(30,'*'));
+  String_Field(2,Cfg.NewUserPassword,Replicate(30,'*'));
+  String_field(3,Cfg.LowBaudPassword,Replicate(30,'*'));
+  String_Field(4,Cfg.SysopMenuPassword,Replicate(30,'*'));
+  String_Field(5,Cfg.DosPassword,Replicate(30,'*'));
+  Add_Message(1,1,25,'If used, this password must be entered in order to Logon');
+  Add_Message(2,1,25,'If used, ALL New Users must enter this password to apply');
+  Add_Message(3,1,25,'Used if a user''s connection rate is below the allowed rates');
+  Add_Message(4,1,25,'Remote SysOps must know this to enter the sysop menu');
+  ADd_Message(5,1,25,'This password is required for remote sysop''s to shell to Dos');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage9;
+Begin
+  Bar.Name[1]:='Time File Xfer''s Open';  Bar.Name[2]:='Time File Xfer''s Close';
+  Bar.Name[3]:='File Rating Commision'; Bar.Name[4]:='File Auto-Validation';
+  Bar.Name[5]:='File Point Commision'; Bar.Name[6]:='Time Percent Back';
+  Bar.Name[7]:='Minimum Free Space'; Bar.Name[8]:='UD Ratio Exempt Level';
+  Bar.Name[9]:='Zip/Arj Comment Files'; Bar.Name[10]:='Add File to ZIP';
+  Bar.Name[11]:='DSZLOG Setting'; Bar.Name[12]:='File Point (Singular)';
+  Bar.Name[13]:='File Points (Plural)'; Bar.Name[14]:='Use File Point Lottery?';
+  Bar.Name[15]:='Cost To Play FP Lottery'; Bar.Name[16]:='Chance Of Winning Lottery';
+  Bar.Name[17]:='Level To Use FP Lottery'; Bar.Name[18]:='Total Lottery Winnings';
+  Bar.Name[19]:='File Extraction Cost';
+  Bar.Total:=19;
+  SetUpScreen('Xfer''s Setting');
+  Init(19);
+  String_Field(1,Cfg.XmodemOpenTime,'!!!!!!!!!');
+  String_Field(2,Cfg.XmodemCloseTime,'!!!!!!!!!');
+  Integer_Field(3,Cfg.UploadFactor,'###',0,100);
+  Integer_Field(4,Cfg.KPerPoint,'#####',0,32767);
+  Byte_Field(5,Cfg.PointCommision,'###',0,255);
+  Byte_Field(6,Cfg.TimePercentBack,'###',0,255);
+  Integer_Field(7,Cfg.MinFreeSpace,'####',0,9999);
+
+  (***********
+  Integer_Field(8,Cfg.ExemptLevel,'',0,32767);
+  ***********)
+
+  Boolean_Field(9,Cfg.ZipComment,'*');
+  String_Field(10,Cfg.ZipFileadd,Replicate(45,'*'));
+
+  String_Field(11,Cfg.DszLog,Replicate(45,'*'));
+  String_Field(12,cfg.filepoint,Replicate(30,'*'));
+  String_Field(13,Cfg.FilePoints,replicate(30,'*'));
+
+{  Boolean_Field(14,Cfg.UseLottery,'*');
+  Integer_Field(15,Cfg.LotCost,'',1,32767);
+  Integer_Field(16,Cfg.LotChance,'###',1,100);
+  Integer_Field(17,Cfg.LotLevel,'',1,32767);
+  Integer_Field(18,Cfg.LotWinnings,'',1,32767); }
+
+  Byte_Field(19,Cfg.ExtractCost,'###',0,100);
+
+  Add_Message(1,1,25,'Time that your File Area opens (Use Format XX:XX AM or PM');
+  Add_Message(2,1,25,'Time that your File Area closes (Use Format XX:XX AM or PM)');
+  Add_Message(3,1,25,'When you rate a file, uploader gets (this # * your rating) points');
+  Add_Message(4,1,25,'If Auto-Validating, 1 point is added for this many KB''s (0=OFF)');
+  Add_Message(5,1,25,'A User gets this amount of pts when a file he uploaded is DL''d');
+  Add_Message(6,1,25,'This percent of time is given back when a user uploads');
+  Add_Message(7,1,25,'Users cannot upload when there is less then this amount of ''K'' ');
+  ADd_Message(8,1,25,'User above this level are exempt from File Ratios');
+  Add_Message(9,1,25,'Add Zip Comment to Uploads? (ZCOMMENT.BBS in Text File Dir)');
+  add_Message(10,1,25,'Includ a file in Uploaded ZIP/ARJ Files (FULL Path)');
+  Add_Message(11,1,25,'This is the setting of you DSZ Log');
+  Add_Message(12,1,25,'Name of File Point (In Singular Form)');
+  Add_Message(13,1,25,'Name of File Points (In Plural Form)');
+  Add_Message(14,1,25,'Do You Want To Use File Point Lottery?');
+  Add_Message(15,1,25,'Cost in File Points to Play Lottery');
+  Add_Message(16,1,25,'Chance of Winning File Point Lottery');
+  Add_Message(17,1,25,'User Level Required to Use File Point Lottery');
+  Add_Message(18,1,25,'Total Winnings if User Wins Lottery upon Next Call');
+  Add_Message(19,1,25,'Cost per File when extracting (0 = Free)');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage12;
+Begin
+  Bar.Name[1]:='New User Voting Infoform';  Bar.Name[2]:='Use New User Voting';
+  Bar.Name[3]:='Auto-Add All New Users'; Bar.Name[4]:='Level to Use NUV';
+  Bar.Name[5]:='Total Needed YES Votes'; Bar.Name[6]:='Total Allowed NO Votes';
+  Bar.Name[7]:='Delete Voted Out Users'; Bar.Name[8]:='Validate Voted In Users';
+  Bar.Name[9]:='NUV Validation Level';  Bar.Name[10]:='Validation File Level';
+  Bar.Name[11]:='Validation File Points';
+  Bar.Total:=11;
+  SetUpScreen('New User Voting');
+  Init(11);
+  Integer_Field(1,Cfg.NuvForm,'#',0,5);
+  Boolean_Field(2,Cfg.UseNuv,'*');
+  Boolean_Field(3,Cfg.AutoAddNuv,'*');
+  Integer_Field(4,Cfg.NuvUseLevel,'',0,32767);
+  Integer_Field(5,Cfg.NuvY,'##',0,30);
+  Integer_Field(6,Cfg.NuvN,'##',0,30);
+  Boolean_Field(7,Cfg.NuvKill,'*');
+  Boolean_Field(8,Cfg.NuvValidate,'*');
+  Integer_Field(9,Cfg.NuvLevel,'',0,32767);
+  Integer_Field(10,Cfg.NuvUdLevel,'',0,32767);
+  Integer_Field(11,Cfg.NuvPoints,'',0,32767);
+  Add_Message(1,1,25,'New User Voting Information Form (1-5)');
+  Add_Message(2,1,25,'If Yes, New User Voting will be used');
+  Add_Message(3,1,25,'If Yes, then New Users will be automaticaly added to NUV');
+  Add_Message(4,1,25,'User must have this level or higer to use New User Voting');
+  Add_Message(5,1,25,'Number of Yes Votes a New User needs to become validated');
+  Add_Message(6,1,25,'Number of No Votes a New User needs to become deleted');
+  ADd_Message(7,1,25,'Auto-Delete New Users who have received too many NO Votes?');
+  Add_Message(8,1,25,'Auto-Validate New Users who have gained enough YES Votes?');
+  add_Message(9,1,25,'New User Validation Level (If Auto-Validate is used)');
+  Add_Message(10,1,25,'New User Validation File Level (If Auto-Validate is used)');
+  Add_Message(11,1,25,'New User Validation File Points (If Auto-Validate is used)');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage10;
+Begin
+  Bar.Name[1]:='ESC Codes in Messages';  Bar.Name[2]:='Backspacing in Msgs';
+  Bar.Name[3]:='Filter Quote Colors';
+{  Bar.Name[4]:='Net Start Send Time';
+  Bar.Name[5]:='Net End Send Time';      Bar.Name[6]:='Invoke Net Password';
+  Bar.Name[7]:='Net Start Receive Time'; Bar.Name[8]:='Net End Receive Time'; }
+
+  Bar.Name[4]:='Name of NET';            {Bar.Name[10]:='Net Name Acronym';}
+  Bar.Name[5]:='Anonymous String';
+  Bar.Name[6]:='FidoNet Origin';
+  Bar.Total:=6;
+  SetUpScreen('Message/Mail Section');
+  Init(6);
+  Boolean_Field(1,Cfg.EscInMsgs,'*');
+  Boolean_Field(2,Cfg.BkSpinMsgs,'*');
+  Boolean_Field(3,Cfg.FilterQuote,'*');
+{ String_Field(4,Cfg.NetStc,Replicate(9,'*'));
+  String_Field(5,Cfg.NetEnc,Replicate(9,'*'));
+  String_Field(6,Cfg.NetPassword,Replicate(30,'*'));
+  String_Field(7,Cfg.Netstart,Replicate(9,'*'));
+  String_Field(8,Cfg.NetEnd,Replicate(9,'*')); }
+
+  String_Field(4,Cfg.NetName,Replicate(30,'*'));
+
+{ String_Field(10,Cfg.NetAcr,replicate(15,'*')); }
+  String_Field(5,Cfg.Anonymousstr,replicate(30,'*'));
+  String_Field(6,Cfg.FidoOrigin,replicate(47,'*'));
+  Add_Message(1,1,25,'Allow Users to use Escapse Codes in messages?');
+  add_Message(2,1,25,'If Yes, users may press ^Q to produce an overprint effect.');
+  Add_Message(3,1,25,'Filter Colors out of Quoted lines in Message Section?');
+{  Add_Message(4,1,25,'Time to start attempting to send NET-Mail (Use XX:XX AM or PM)');
+  Add_Message(5,1,25,'Time to end sending NET-Mail If previous was unsuccesful');
+  Add_Message(6,1,25,'This password must be entered at the matrix to invoke NET-Mail');
+  Add_Message(7,1,25,'NET-Mail only start time (if you are a HUB)');
+  Add_Message(8,1,25,'NET-Mail only ending time (if you area a HUB)'); }
+
+  Add_Message(4,1,25,'This is the Name of the NET');
+
+{  Add_Message(10,1,25,'This is a shorter version of the NET Name'); }
+  Add_Message(5,1,25,'Displayed for "Author" of an Anonymous Post');
+  Add_Message(6,1,25,'Your FidoNet Origin Line');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+Procedure DoPage11;
+VAR IB,DC:String[1];
+Begin
+  IB[1]:=Cfg.BoxChar
+  Bar.Name[2]:='Number of Welcome Files';
+  Bar.Name[3]:='Minutes Before Time-Out'; Bar.Name[4]:='Remote Door Creating';
+  Bar.Name[5]:='Use Doors at All';
+  Bar.Name[6]:='Time to Activate Event'; Bar.Name[7]:='File to Run Upon Event';
+  Bar.Name[8]:='Use Rumors/One-Liners'; Bar.Name[9]:='Rumor Bracket Character';
+{  Bar.Name[10]:='Use Quote for The Day';
+  Bar.Name[10]:='Name of Quote/Day'; }
+  Bar.Name[10]:='Use Famous Events';
+  Bar.Name[11]:='Use Input Boxes'; Bar.Name[13]:='Box Fill Character';
+  Bar.Name[12]:='Box Aborted String'; Bar.Name[15]:='User Note Changing';
+  Bar.Name[13]:='Bar Bracket Charater';
+  Bar.Name[14]:='Cost to Request Chat';
+  Bar.Total:=17;
+  SetUpScreen('Look and Feel');
+  Init(17);
+  Integer_Field(2,Cfg.NumWelcomes,'###',1,999);
+  Integer_Field(3,Cfg.MinTimeOut,'##',1,60);
+  String_Field(6,Cfg.EventTime,'!!!!!!!!');
+  String_Field(7,Cfg.EventBatch,Replicate(12,'!'));
+{  Byte_Field(8,Cfg.UseRumors,'#',0,2); }
+
+  String_Field(9,Cfg.RumChar,'**');
+
+{
+  Byte_Field(10,Cfg.UseQuotes,'#',0,3);
+  String_Field(10,Cfg.ForDayStr,'***************');
+}
+
+{  Byte_Field(10,Cfg.UseThisDay,'#',0,3) }
+
+  Boolean_Field(11,Cfg.UseBox,'*');
+  String_Field(12,IB,'*');
+  String_Field(13,Cfg.BoxAbort,'***************');
+  Boolean_Field(14,Cfg.ChangeNote,'*');
+  String_Field(15,Cfg.BarChar,'**');
+  Integer_Field(16,Cfg.ChatCost,'####',0,1000);
+  Add_Message(1,1,25,'This character is echoed when a user is entering sensitive info');
+  Add_Message(2,1,25,'Total amount of WELCOME.XXX Files you have (1-999)');
+  ADd_Message(3,1,25,'No Input after this amount of minutes user is disconnected');
+  Add_Message(4,1,25,'Allow Remote SysOp''s to create doors?');
+  Add_Message(5,1,25,'If Yes, Doors will be used');
+  Add_Message(6,1,25,'Enter the Time for an External Event to take place (if any..)');
+  Add_Message(7,1,25,'File that will be ran when an external event is called');
+  Add_Message(8,1,25,'Use Rumors? (0 = No  1 = Main Menu Only  2 = ALL Menus)');
+  add_Message(9,1,25,'Goes around Rumors (1st Char=Left  2nd Char=Right');
+
+{  Add_Message(10,1,25,'Display Quote For The Day (0 = No  1 = Login  2 = Logoff  3 = Both');
+  Add_Message(11,1,25,'Goes in place of "Quote" in Your "Quote" for the Day'); }
+
+  Add_Message(10,1,25,'Display Famous Events? (0 = No  1 = Login  2 = Logoff  3 = Both');
+  Add_Message(11,1,25,'If Yes, Input Box''s will be used');
+  Add_Message(12,1,25,'This character fills the input box (if used)');
+  Add_Message(13,1,25,'Displayed when a user aborts input while in an input box');
+  Add_Message(14,1,25,'Allow Users to change there own User Notes?');
+  Add_Message(15,1,25,'Goes around Bar Newscan Prompt (1st Char=Left  2nd Char=Right)');
+  Add_Message(16,1,25,'If > 0 then User will be charged to request chat');
+  Process_Input(1);
+  Dispose_Fields;
+  Cfg.BoxChar:=IB[1];
+  Cfg.DotChar:=Dc[1];
+  RmWin;
+End;
+
+Procedure Do_Look_Feel_2;
+VAR X:Byte;
+Begin
+  Bar.Name[1]:='Ask Message Conference';
+  Bar.Name[2]:='Total Message Conferences';
+  Bar.Name[3]:='Ask File Conference';
+  Bar.Name[4]:='Total File Conferences';
+  Bar.Name[5]:='Default SysOp Status Line';
+  Bar.Name[6]:='Top-Five Listings Type';
+  Bar.Name[7]:='# of Login Status Screens';
+  Bar.Name[8]:='# of Prelogon ANSI''s';
+  Bar.Name[9]:='Node Number';
+  Bar.Name[10]:='Total Nodes';
+  Bar.Name[11] := 'Use One-Liners';
+  Bar.Total:=11;
+  SetUpScreen('Look and Feel ][');
+  Init(11);
+{  Boolean_Field(1,Cfg.AskMsgConf,'*');  }
+  Byte_Field(2,Cfg.MaxMsgConf,'##',0,99);
+{  Boolean_Field(3,Cfg.AskFileConf,'*'); }
+  Byte_Field(4,Cfg.MaxFileConf,'##',0,99);
+  Byte_Field(5,Cfg.DefBottomline,'#',0,3);
+  Byte_Field(6,Cfg.DefTopFive,'#',0,3);
+  Integer_Field(7,Cfg.NumStats,'###',0,999);
+  Integer_Field(8,Cfg.NumPreLogon,'###',0,999);
+  Byte_Field(9,Cfg.NodeNum,'##',1,99);
+  Byte_Field(10,Cfg.TotalNodes,'##',1,99);
+  Boolean_Field(11,Cfg.Use_One_Liners,'*');
+  Add_Message(1,1,25,'Ask Which Conference Upon Entry to Msg. Section');
+  Add_Message(2,1,25,'Total Amount of Message Conferences');
+  Add_Message(3,1,25,'Ask Which Conference Upon Entry to File Section');
+  Add_Message(4,1,25,'Total Amount of File Conferences');
+  Add_Message(5,1,25,'Default Status Line: 0=Off 1=Normal 2=Secondary 3=43/50 Lines)');
+  Add_Message(6,1,25,'Top-Five Screen (0=External 1=Line 2=Box 3=Shadowed Box)');
+  Add_Message(7,1,25,'Total Number of Logon Status Screens');
+  Add_Message(8,1,25,'Total Number of Prelogon ANSI''s');
+  Add_Message(9,1,25,'What Node Number is this copy? (If Multi-Node)');
+  Add_Message(10,1,25,'Total Number of Nodes you are running');
+  Add_Message(11,1,25,'Do you want to use One-Liners in Login?');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+(*
+
+Procedure DoMenuNames;
+Begin
+  Bar.Name[1]:='Main Menu Name';  Bar.Name[2]:='File Menu Name';
+  Bar.Name[3]:='Message Menu Name'; Bar.Name[4]:='QWK Menu Name';
+  Bar.Name[5]:='Rumor Menu Name'; Bar.Name[6]:='BBS Listing Menu Name';
+  Bar.Name[7]:='New User Voting Menu'; Bar.Name[8]:='Quote For The Day Menu';
+  Bar.Name[9]:='E-Mail Section Menu Name'; Bar.Name[10]:='Doors Menu Name';
+  Bar.Name[11]:='Quick Main Menu Name';
+  Bar.Total:=11;
+  SetUpScreen('Menu Names');
+  Init(11);
+  String_Field(1,Cfg.MainMenuStr,Replicate(30,'*'));
+  String_Field(2,Cfg.FileMenuStr,Replicate(30,'*'));
+  String_Field(3,Cfg.MsgMenuStr,Replicate(30,'*'));
+  String_Field(4,Cfg.QwkMenuStr,Replicate(30,'*'));
+  String_Field(5,Cfg.RumorMenuStr,Replicate(30,'*'));
+  String_Field(6,Cfg.BBSMenuStr,Replicate(30,'*'));
+  String_Field(7,Cfg.NuvMenuStr,Replicate(30,'*'));
+  String_Field(8,Cfg.Q4DayMenuStr,Replicate(30,'*'));
+  String_Field(9,Cfg.MailMenuStr,Replicate(30,'*'));
+  String_Field(10,Cfg.DoorMenuStr,REplicate(30,'*'));
+  String_Field(11,Cfg.QuickMenuStr,Replicate(30,'*'));
+  Add_Message(1,1,25,'Name displayed at Main Menu Prompt');
+  Add_Message(2,1,25,'Name displayed at the File Menu Prompt');
+  Add_Message(3,1,25,'Name displayed at the Message Area Prompt');
+  Add_Message(4,1,25,'Name of the QWK Menu');
+  Add_Message(5,1,25,'Name displayed at the Rumor Prompt');
+  Add_Message(6,1,25,'Name displayed at the BBS Listing Menu');
+  Add_Message(7,1,25,'Name of New User Voting Menu');
+  Add_Message(8,1,25,'Name of the Quote For The Day Menu');
+  Add_Message(9,1,25,'E-Mail Menu Name');
+  Add_Message(10,1,25,'Online Doors Menu Name');
+  Add_Message(11,1,25,'Quick Main Menu Name');
+  Process_Input(1);
+  Dispose_Fields;
+  RmWin;
+End;
+
+*)
+
+Procedure DoUserTime;
+var input:lstr;
+    n:integer;
+
+  Procedure Clr(Line:Byte);
+  Begin
+    WriteAt(WhereX,Line,1,1,Replicate(78-WhereX,#32));
+  End;
+
+  procedure refresh;
+  var cnt:integer;
+  begin
+    gotoxy (3,2);
+    Textattr:=31;
+    writeln('Level Time ³ Level Time ³ Level Time ³ Level Time ³ Level Time');
+    Gotoxy(3,3);
+    Writeln('תתתתתתתתתתת³תתתתתתתתתתתת³תתתתתתתתתתתת³תתתתתתתתתתתת³תתתתתתתתתתת');
+    gotoxy (3,4);
+    for cnt:=1 to 100 do begin
+      TextAttr:=30;
+      write (cnt:4,': ',cfg.usertime[cnt]:4);
+      TextAttr:=31;
+      if (cnt mod 5)=0 then Begin TextAttr:=27; writeln; Write('÷ '); End else write (' ³ ')
+    end
+  end;
+
+  procedure setone (n,v:integer);
+  var x,y:integer;
+  begin
+    x:=((n-1) mod 5)*13+9;
+    y:=((n-1) div 5)+4;
+    gotoxy (x,y);
+    write (v:4);
+    cfg.usertime[n]:=v
+  end;
+
+  procedure getone (n:integer);
+  var x,y,v:integer;
+  begin
+    x:=((n-1) mod 5)*13+9;
+    y:=((n-1) div 5)+4;
+    gotoxy (x,y);
+    write ('    ');
+    gotoxy (x,y);
+    readln (input);
+    v:=valu(input);
+    if (v<1) or (v>1000) then v:=cfg.usertime[n];
+    setone (n,v)
+  end;
+
+  function getn (txt:lstr):integer;
+  var input:lstr;
+  begin
+    gotoxy (3,24);
+    write (txt,': ');
+    clr(24);
+    readln (input);
+    getn:=valu(input)
+  end;
+
+  function getlvl (txt:lstr):integer;
+  var n:integer;
+  begin
+    n:=getn (txt);
+    if (n<1) or (n>100) then n:=0;
+    getlvl:=n
+  end;
+
+  procedure pattern;
+  var st,en,ba,se,cn:integer;
+  begin
+    st:=getlvl ('Starting level of pattern');
+    if st=0 then exit;
+    en:=getlvl ('Ending level of pattern');
+    if en<st then exit;
+    ba:=getn ('Time for level '+strr(st));
+    if (ba<1) or (ba>1000) then exit;
+    se:=getn ('Additional time per level');
+    if (se<0) or (se>1000) then exit;
+    cn:=st;
+    repeat
+      setone (cn,ba);
+      if ba+se<1000
+        then ba:=ba+se
+        else ba:=1000;
+      cn:=cn+1
+    until cn>en
+  end;
+
+var k:char;
+begin
+  GrowMkWin(1,1,80,25,11,1,3);
+  repeat
+    Refresh;
+    repeat
+      gotoxy (3,24);
+      write ('Number to change or [P]attern [Q]uit: ');
+      clr(24);
+      readln (input)
+    until length(input)>0;
+    k:=upcase(input[1]);
+    n:=valu(input);
+    if (n>=1) and (n<=100) then getone(n) else
+      case k of
+        'P':pattern
+      end
+  until k='Q';
+  RmWin;
+end;
+
+CONST Name:Array [1..20] Of String[23] =
+      (' System Specifications ',
+       ' Pathnames / Modem     ',
+       ' Modem Setup ][        ',
+       ' Supported Baud Rates  ',
+       ' Download Baud Rates   ',
+       ' Default Colors        ',
+       ' Default User Accounts ',
+       ' Matrix Setup          ',
+       ' Information Forms     ',
+       ' Required Levels       ',
+       ' System Passwords      ',
+       ' File Section          ',
+       ' Message Section       ',
+       ' Look and Feel         ',
+       ' New User Voting       ',
+       ' Look/Feel ][          ',
+       ' Menu Names            ',
+       ' User Time Per Day     ',
+       ' Shell to DOS          ',
+       ' Quit Program          ');
+       X=2;
+
+Procedure Start_Up;
+VAR I:Byte;
+    Finished:Boolean;
+
+  Procedure OpenScreen;
+  VAR A,X:Byte;
+      V2:String[40];
+  BEGIN
+  V2:='"The Revision"';
+  For A:=1 To Length(V2) Do Begin
+    For X:=80 Downto 44+A Do Begin
+      WriteAt(X,15,14,0,V2[A]);
+      Delay(1);
+      WriteAt(X,15,9,0,' ');
+    End;
+  WriteAt(44+A,15,14,0,V2[A]);
+  End;
+    WriteAt(41,17,9,0,'Written By: Crimson Blade');
+  End;
+
+  Procedure PlaceBar(X,Y:Byte; Hi:Boolean);
+  Var C1,C2:Byte;
+  BEGIN
+    If Hi then Begin
+      C1:=15;
+      C2:=5;
+    End
+    Else Begin
+      C1:=15;
+      C2:=0;
+    End;
+    WriteAT(X,Y+2,C1,C2,Name[i]);
+  END;
+
+BEGIN
+  I:=1;
+  Finished:=False;
+  TextAttr:=0;
+  ClrScr;
+  DrawMain;
+  OpenScreen;
+  WriteAt(3,24,14,1,TimeStr(Now));
+  PlaceBar(x,i,true);
+  REPEAT
+    CASE GetKey OF
+    #128,#200:Begin       {UP}
+         PlaceBar(x,i,false);
+         dec(i);
+         IF i<=0 Then i:=20;
+         PlaceBar(x,i,true);
+         End;
+    #129,#208:Begin       {DOWN}
+         PlaceBar(x,i,False);
+         inc(i);
+         IF i>=21 Then i:=1;
+         PlaceBar(x,i,true);
+         End;
+    #133,#13: Begin
+          ReadCfg;
+          CASE I OF
+          1:DoPage1;
+          2:DoPage2;
+          3:DoPage3;
+          4:DoBaud(Cfg.SupportedRates,'Supported Rates');
+          5:DoBaud(Cfg.DownloadRates,'Download Rates');
+          6:DoColors;
+          7:DoPage4;
+          8:DoPage5;
+          9:DoPage6;
+         10:DoPage7;
+         11:DoPage8;
+         12:DoPage9;
+         13:DoPage10;
+         14:DoPage11;
+         15:DoPage12;
+         16:Do_Look_Feel_2;
+         17:; {DoMenuNames;}
+         18:DoUserTime;
+         19:Begin
+              TextAttr:=1;
+              ClrScr;
+              WriteAt(1,1,14,4,'Type [EXIT] to Return to ViSiON/2 Config');
+              Exec(GetEnv('COMSPEC'),'');
+              ClrScr;
+              DrawMain;
+              OpenScreen;
+            End;
+         20:Finished:=True;
+          End;
+          WriteConfig;
+          WriteAt(3,24,14,1,TimeStr(Now));
+          WriteAt(14,24,14,1,Replicate(65,#32));
+          PlaceBar(x,i,true);
+         End;
+    #132,#27:Finished:=True;
+    End;
+    UNTIL Finished;
+END;
+
+Begin
+  SaveScreen(2);
+  If Not Exist('CONFIG.BBS') Then FormatConfig;
+  ReadCfg;
+  Start_Up;
+  SlideRestoreScreen(2,right);
+  DisposeScreen(2);
+End.

@@ -1,0 +1,1 @@
+TPC /L /B /EC:\WORK VISION.PAS /$I- /$F+ /$O+ /$R- /$S- /$N- /$A- /$E- /$D- /$V- /$B-

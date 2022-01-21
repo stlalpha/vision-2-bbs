@@ -1,0 +1,676 @@
+{$R-,S-,I-,D-,F-,V-,B-,N-,L+,O+ }
+
+unit newmain;
+
+interface
+
+procedure do_menu_system;
+
+implementation
+
+Uses
+  GenTypes,
+  DosMem,
+  ConfigRt,
+  MNET,
+  GenSubs,
+  Crt,
+  StatRet,
+  Subs1,
+  Windows,
+  Subs2,
+  SubsOvr,
+  Mainr2,
+  OverRet1,
+  TopUser,
+  Rumors,      {          Rumors Section }
+  Mess0,
+  Mess1,
+  Mess2,
+  Mess3,
+  Mess4,
+  Bulletin,    {        Bulletin section }
+  MessSys0,
+  Configur,    {   Configuration section }
+  Doors,       {            Door section }
+  Email0,
+  Group,
+  Group1,
+  Email,       { Electronic mail section }
+  Archive,     { ZIP/ARJ/LHA Viewing     }
+  Viewer,
+  ACS,         { ACS System              }
+  File0,       { Low Level File Xfer     }
+  File1,       { Change File Areas       }
+  File2,       { File NewScan Config     }
+  File3,       { File Upload             }
+  Filexfer,    { File transfer section   }
+  Voting,      { Voting section }
+  Mycomman,    { all junk }
+  Feedback,
+  BBSList,
+  NUV,         { New User Voting }
+  FileSort,    { File Sort Routines }
+  FileSys0,    { File SysOp Low Level }
+  FileSys1,    { File SysOp Misc }
+  FileSys2,    { More File SysOp Misc }
+  New_FS,      { File Area Sysop Stuff }
+  UserList,    { User Listing Routines }
+  Login2,      { Misc old login procedures }
+  MainMenu,
+  NodeChat;    { Multi-Node Chatting Stuff }
+
+
+Procedure Do_Menu_System;
+Const Name    : Sstr = 'START';
+Var   F       : File;
+      CurMenu : MenuRec;
+      Total,
+      TotalGlob: Byte;
+      C2      : Char;
+      Temp    : Integer;
+      AutoRun,
+      AutoRunAll : Boolean;
+
+      Command, CurrentCommand, UserInput : Lstr;
+
+      Global : ^CommandArray;
+
+  Procedure Load_Menu_Keys;
+  Var O : Word; I:Integer;
+      B : Byte;
+  Begin
+    AutoRun := False;
+    AutoRunAll := False;
+    If Commands <> Nil Then Dos_FreeMem(Commands);
+    Assign(F,Cfg.MenuDir + Name + '.CFG');
+    Reset(F,1);
+    Dos_GetMem(Commands,FileSize(F));
+    Total := FileSize(F) DIV SizeOf(CommandRec);
+    For B := 1 to Total
+      Do Begin
+        NBlockRead(F,Commands^[B],SizeOf(CommandRec),O);
+        I := IoResult;
+        If Commands^[B].Keys = '//' Then AutoRun := True;
+        If Commands^[B].Keys = '~~' Then AutoRunAll := True;
+      End;
+    O := IoResult;
+    Close(F);
+  End;
+
+  Function Load_Menu : Boolean;
+  Var O : Word; I:Integer;
+  Begin
+    Load_Menu := True;
+    If Not Exist(Cfg.MenuDir + Name + '.MNU') Then Begin
+      Writeln('ERROR: '+Name+'.MNU not found.');
+      Load_Menu := False;
+      EXIT;
+    End;
+    Assign(F,Cfg.MenuDir + Name + '.MNU');
+    Reset(F,1);
+    NBlockRead(F,CurMenu,SizeOf(MenuRec),O);
+    O := IoResult;
+    If Copy(CurMenu.Prompt1,1,2) = '%%' Then
+      If Not Exist(Copy(CurMenu.Prompt1,3,$FF)) Then
+        Begin
+          Writeln('Input File: '+Copy(CurMenu.Prompt1,3,$FF)+' not found.');
+          Load_Menu := False;
+          Close(F);
+          Exit;
+        End;
+    Close(F);
+    LastMenu := Name;
+  End;
+
+  Procedure Prompt_User;
+
+    Procedure Display(S:String);
+    Begin
+      If S = '' Then Exit;
+      If S[1] = '@' Then Begin
+        Sr.C[1] := 'MN';
+        Sr.S[1] := Copy(S,2,Length(S));
+        if pos('%%',s) = 1 then delete(s,1,2);
+        Subs1.MultiColor(Urec.Prompt);
+      End
+        Else MultiColor(S);
+    End;
+
+  begin
+    hot_keys_active := curmenu.force_hotkey OR (hotkeys in urec.config);
+    display(CurMenu.Prompt1);
+    display(CurMenu.Prompt2);
+    if curmenu.useprompt then writestr('*');
+    userinput := Inpt;
+    If UserInput <> '' Then Writeln(Direct);
+  end;
+
+  Function Find_Input(Start : Integer) : Integer;
+  Var X, V : Integer;
+  Begin
+    Find_Input := 0;
+    V := Valu(UserInput);
+
+    If V < 1 Then
+      While (UserInput[ Length(UserInput) ] IN ['0'..'9'])
+        Do Delete(UserInput,Length(UserInput),1);
+
+    For X := Start to Total
+      Do If UpString(UserInput) = UpString(Commands^[x].Keys)
+      Then Begin
+        Find_Input := X;
+        Exit;
+      End Else
+      If (V>0) AND (Commands^[x].Keys = '##')
+      Then Begin
+        Find_Input := X;
+        Exit;
+      End Else
+      If (UserInput='') And (Commands^[x].Keys = '^M')
+      Then Begin
+        Find_Input := X;
+        Exit;
+      End;
+  End;
+
+  Function Parse_String(VAR P:Lstr) : Lstr;
+  Var S : Lstr;
+      B : Byte Absolute S;
+      X : Byte;
+  Begin
+    S[0] := #0;
+    Parse_String := S;
+    X := Length(P);
+    IF X < 2 Then Exit;
+    While (P[B+1] <> ';') AND (B < X) DO Begin
+      Inc(B);
+      S[B] := P[B];
+    End;
+    Delete(P,1,B+1);
+    Parse_String := S;
+  End;
+
+Procedure Change_Menus(S:SStr); Forward;
+
+Procedure Do_Command(VAR I : Integer; IsGlobal: Boolean);
+Var Param : Lstr;
+    Pass  : Boolean;
+Begin
+
+  If I < 1 Then Pass := False Else
+    If IsGlobal Then Pass := ACSPass(Global^[i].ACS)
+      Else Pass := ACSPass(Commands^[i].ACS);
+
+  If Pass Then Begin
+
+    If IsGlobal Then
+      Command := Global^[i].Command Else
+      Command := Commands^[i].Command;
+    CurrentCommand := Parse_String(Command);
+
+    While Length(CurrentCommand) > 0 DO BEGIN
+
+      C2 := Upcase(CurrentCommand[2]);
+      Param := Copy(CurrentCommand,3,Length(CurrentCommand));
+
+      CASE Upcase(CurrentCommand[1]) OF
+       '^' : CASE C2 OF
+               'P' : HoldScreen;
+               '@' : WriteStr(Param);
+               'H' : Begin
+                       MultiColor(Param);
+                       Inpt[1] := WaitForChar(True);
+                     End;
+               'B' : Write(^G);
+               '$' : Begin
+                       Change_Menus(Param);
+                       UserInput := '';
+                       I := Total + 1;
+                       Exit;
+                     End;
+               'M' : Writeln(Direct);
+               'F' : PrintFile(Param);
+               'I' : InputFile(Param);
+               'D' : DataFile(Param);
+               'S' : Begin
+                       MultiColor(Param);
+                       Writeln(Direct);
+                     End;
+               'L' : ANSiCLS;
+               'X' : WriteHdr(Param);
+               'R' : Begin
+                       Write_All_Door_Files;
+                       ExecuteWithSwap(Param,'',false);
+                     End;
+             END;
+       'F' : Begin
+               If Init_FileXfer(1) Then
+                 CASE C2 Of
+                   'D' : Download(0);
+                   'A' : Add_To_Batch(0,'',0,False);
+                   'V' : ListArchive(False);
+                   'T' : TypeFile(False);
+                   'R' : RemoveFromBatch(0,'');
+                   'I' : FileInfo;
+                   'U' : Upload;
+                   'L' : FileXfer.ListFiles(False,False,0);
+                   'W' : FileXfer.ListFiles(True,False,0);
+                   '*' : GetArea;
+                   'S' : SearchFile;
+                   'N' : NewScanALL;
+                   'B' : ListBatch;
+                   'Z' : File2.FixNewScan;
+                   'E' : EditUpload;
+                   ']' : ScrollForward;
+                   '[' : ScrollBackward;
+                   'C' : Clear_BatchDown;
+                   'K' : ConfigFileListings;
+                 END;
+             End;
+       '$' : Begin
+               If Init_FileXfer(1) Then
+                 CASE C2 OF
+                   'S' : SortArea;
+                   'A' : GetArea;
+                   ']' : ScrollForward;
+                   '[' : ScrollBackward;
+                   'X' : ViewTransLog;
+                   'W' : AddMultipleFiles;
+                   'F' : SysOpAdd;
+                   '*' : Directory(Area.XmodemDir);
+                   'M' : ModAREA;
+                   'K' : KillAREA(CurArea);
+                   'O' : ReorderAREAS;
+                   'B' : AddBatch(0);
+                   'D' : Begin
+                           Def := 0;
+                           Delete_All;
+                         End;
+                   'E' : Edit_All;
+                   'V' : View_All;
+                   'P' : MoveFiles;
+                   '=' : RenameFile(0);
+                   'N' : NewFiles;
+                   'L' : New_FS.ListFiles(False,False,0);
+                   '!' : New_FS.ListFiles(True,False,0);
+                 END;
+             End;
+       'M' : If Init_Message Then
+               CASE C2 OF
+                 'P' : PostBul;
+                 'N' : Bulletin.NewScanAll(False);
+                 'R' : Bulletin.NewScanAll(True);
+                 'K' : KillBul;
+                 'L' : ListBuls;
+                 'E' : EditBul;
+                 ']' : NextSubBoard(True);
+                 '[' : NextSubBoard(False);
+                 'F' : Mess3.FixNewScan;
+                 'T' : ToggleNewScan;
+                 'U' : ProcessRep;
+                 'D' : MakeQwk;
+                 'G' : GetMaxQwk;
+                 'A' : ActiveBoard;
+                 'H' : GetHeaderType;
+               END;
+       '&' : If Init_Message Then
+               CASE C2 OF
+                 'S' : SetNameAccess;
+                 'A' : SetAllAccess;
+                 'L' : ListAccess;
+                 'M' : MoveBulletin;
+                 'B' : Bul_To_Text;
+                 'E' : EditBoard;
+                 'K' : KillBoard;
+                 'O' : OrderBoards;
+               END;
+       'N' : If Init_NUV Then
+             CASE C2 OF
+               'L' : ListAccounts;
+               'N' : NewScan(True);
+               'S' : NewScan(False);
+               'V' : VoteOn(Valu(Inpt),False,True);
+               'X' : VoteOn(Valu(Inpt),False,False)
+             END;
+       'E' : If Init_EMail Then
+             CASE C2 OF
+               'L' : ListMail(Incoming^);
+               'O' : ListMail(Outgoing^);
+               'F' : Write_To_File;
+               'E' : EditMailUser;
+               'C' : CopyMail;
+               'W' : ForwardMail;
+               'S' : SendMail;
+               'Z' : ZippyMail;
+               'N' : MailRead(True);
+               'R' : MailRead(False);
+               'B' : SomeoneElse;
+               '*' : ScanAll;
+               'D' : DeleteRange;
+               'A' : Announcement;
+               'Q' : QueryDelete(Incoming^);
+               '-' : NextMail;
+               'K' : DeleteIncoming;
+               'V' : ViewOutGoing;
+               '!' : KillOutGoing;
+               '#' : ReadNum(Valu(Inpt));
+             END;
+       'G' : If Init_Email Then
+             CASE C2 OF
+               'A' : SelectGroup;
+               'D' : DeleteGroup;
+               'L' : ListMembers;
+               'R' : ReadDMember;
+               'K' : RemoveMember;
+               'C' : SetClass;
+               'S' : SetCreator;
+               'B' : AddbyLevel;
+             END;
+       'B' : If Init_BBSList Then
+             CASE C2 OF
+               'L' : ListBBS;
+               'A' : AddBBS;
+               'C' : ChangeBBS;
+               'V' : ViewANSi;
+               'D' : DeleteBBS;
+             END;
+       'R' : If Init_Rumors Then
+             CASE C2 Of
+               'L' : ListRumors;
+               'A' : AddRumor;
+               'N' : RumorsNewscan;
+               'S' : SearchForText;
+               'D' : DeleteRumor;
+               '*' : RandomRumor;
+             END;
+       'D' : If Init_Doors Then
+             CASE C2 OF
+               'L' : ListDoors;
+               'O' : OpenDoor(0);
+               'I' : GetInfo;
+               'C' : ChangeDoor;
+               'D' : DeleteDoor;
+               'M' : MaybeMakeDoor;
+               '*' : OpenDoor(Valu(UserInput));
+               '@' : OpenDoor(Valu(Param));
+             END;
+       'C' : CASE C2 OF
+               'F' : ChangeConf(False,0);
+               'M' : ChangeConf(True,0);
+               'Y' : ChangeConf(False,Valu(Param));
+               'Z' : ChangeConf(True,Valu(Param));
+             END;
+       'A' : CASE C2 OF
+               'A' : Add_Auto_Sig;
+               'E' : Pick_Emulation;
+               'S' : SummonSysOp;
+               'I' : Infoforms;
+               'G' : LogOff;
+               'D' : ShowDailyLog;
+               'F' : MainMenu.Feedback;
+               'P' : ChangePwd;
+               'Y' : ShowSystemStatus;
+               'L' : SetLastCall;
+               'W' : ShowLastCallers;
+               'C' : DoItYerSelfConfig;
+               'U' : UserListUtils;
+               '=' : ThisDay;
+               'M' : Auto_Message;
+               'O' : Begin
+                       Inpt[0] := #0;
+                       Urec.lastnummsgs := Status.TotalMSGS;
+                       Urec.lastnumfiles:= Status.TotalFILES;
+                       ForceHangup := True;
+                       Exit;
+                     End;
+             END;
+       'V' : If Init_Voting Then
+             CASE C2 OF
+               'L' : ListChoices;
+               'V' : GetVote(False);
+               'S' : ShowResults;
+               'T' : ListTopics;
+               'P' : SelectTopic;
+               'A' : Temp := AddChoice;
+               '*' : AddTopic;
+               'D' : DelTopic;
+               'R' : RemoveChoice;
+               'N' : NextTopic;
+               'M' : VoteOnMandatory;
+             END;
+       'S' : IF C2 = 'T' THEN ViewTopTen(Valu(Param));
+       '%' : CASE C2 OF
+               'A' : AddToNUV('');
+               'U' : EditUsers;
+               'S' : EditStatus;
+               'B' : BlackList;
+               'X' : TransferName;
+               'O' : AddNews;
+               'N' : EditNews;
+               'K' : DelErrLog;
+               'T' : SetTime;
+               'M' : MakeUser;
+               'H' : InfoFormHunt;
+               'V' : ViewSysLog;
+               'D' : DelSysLog;
+               'L' : ShowAllSysOps;
+               'E' : ReadErrLog;
+               '*' : RemoveAllForms;
+               '&' : RemoteDOSShell;
+             END;
+       'I' : IF Init_Feedback THEN
+             CASE C2 OF
+               'W' : WriteCurFeedback;
+               'D' : DelFeedback;
+               'E' : EditFeedbackUser;
+               'I' : FeedbackInfoform;
+               'N' : NextFeedback;
+               'A' : ReadAgain;
+               'R' : ReplyFeedback;
+               'L' : ListFeedback;
+               'Q' : QuickFeedbackRead(False);
+               '*' : QuickFeedbackRead(True);
+             END;
+       'L' : CASE C2 OF
+               'W' : RandomWelcome;
+               'S' : RandomStat;
+               'M' : Check_Waiting_Mail;
+               'F' : Check_Feedback;
+               'N' : Check_Notices;
+               'A' : Show_AutoMessage;
+               'U' : ShowNewUsers;
+               'L' : ShowLastFive;
+               'O' : One_Liners;
+               'C' : Check_NewNUV;
+               'E' : PrintNews(0,True);
+               'V' : PrintNews(0,False);
+             END;
+       '!' : CASE C2 OF
+               'C' : MultiNode_Chat;
+               'S' : Send_Node_Message(false);
+               'N' : Send_Node_Message(true);
+               'L' : Node_Listing;
+               'U' : UpdateNode(Param);
+             END;
+       END;
+       CurrentCommand := Parse_String(Command);
+    END
+  END
+END;
+
+  Procedure Check_AutoRun;
+  Var X : Integer;
+  Begin
+    If Not AutoRun Then Exit;
+    For X := 1 to Total Do
+      Begin
+        If Commands^[X].Keys = '//' Then
+          Do_Command(x,false);
+        If X > Total Then Exit;
+      End;
+  End;
+
+  Procedure Check_AutoRunAll;
+  Var X : Integer;
+  Begin
+    If Not AutoRunAll Then Exit;
+    For X := 1 to Total Do
+      Begin
+        If Commands^[X].Keys = '~~' Then
+          Do_Command(x,false);
+        If X > Total Then Exit;
+      End;
+  End;
+
+  Procedure Load_Global;
+  Var O : Word; I:Integer;
+      B : Byte;
+  Begin
+    TotalGlob := 0;
+    If Not Exist(Cfg.MenuDir + 'GLOBAL.CFG') Then Exit;
+    Assign(F,Cfg.MenuDir + 'GLOBAL.CFG');
+    Reset(F,1);
+    Dos_GetMem(Global,FileSize(F) + 1);
+    TotalGlob := FileSize(F) DIV SizeOf(CommandRec);
+    For B := 1 to TotalGlob
+      Do Begin
+        NBlockRead(F,Global^[B],SizeOf(CommandRec),O);
+        I := IoResult;
+      End;
+    Close(F);
+  End;
+
+  Function Check_Global : Boolean;
+  Var X, XX : Integer;
+  Begin
+    Check_Global := False;
+    If (TotalGlob < 1) OR (UserInput = '') Then Exit;
+    For X := 1 to TotalGlob Do
+      If Upstring(UserInput) = UpString(Global^[x].Keys)
+      Then Begin
+        Check_Global := True;
+        Do_Command(X,true);
+        UserInput := '';
+        Exit;
+      End;
+  End;
+
+  Procedure Check_Menu_Dat;
+  Begin
+    If CurMenu.ClrScrBefore Then AnsiCls;
+    If Urec.Level <= CurMenu.ForceHelpLevel Then
+      PrintFile(Cfg.TextFileDir + CurMenu.HelpMenu);
+    If CurMenu.Mes_Conf > 0 Then ChangeConf(True,CurMenu.Mes_Conf);
+    If CurMenu.File_Conf > 0 Then ChangeConf(False,CurMenu.File_Conf);
+  End;
+
+  Procedure Change_Menus(S:SStr);
+  Var Last : SStr;
+
+    Procedure Load_Original;
+    Var B : Boolean;
+    Begin
+      Name := Last;
+      B := Load_Menu;
+    End;
+
+  Begin
+    Last := Name;
+    Name := S;
+    If Not Load_Menu Then Begin
+      Load_Original;
+      Exit;
+    End;
+    If Not ACSPass(CurMenu.ACS)
+      Then Begin
+        If (CurMenu.FallBack = '') OR (Name = CurMenu.Fallback)
+        Then Begin
+          Load_Original;
+          Exit;
+        End Else Begin
+          Name := CurMenu.Fallback;
+          If Not Load_Menu Then Begin
+            Load_Original;
+             Exit;
+          End;
+          If Not ACSPass(CurMenu.ACS)
+            Then Begin
+              Load_Original;
+              Exit;
+            End;
+        End;
+      End;
+    Writeln;
+    Load_Menu_Keys;
+    Check_AutoRun;
+    Check_Menu_Dat;
+  End;
+
+Var B   : Boolean;
+    I   : Integer;
+Begin
+
+  UpdateNode('');
+  If FromDoor Then Name := LastMenu;
+  LastMenu := '';
+  Repeat
+    B := False;
+    If Not Load_Menu Then Begin
+      Delay(1000);
+      Exit;
+    End;
+    If Not ACSPass(CurMenu.ACS)
+      Then Begin
+        If (CurMenu.FallBack = '') OR (Name = CurMenu.Fallback)
+          Then Begin
+            Writeln(^M'Cannot access top menu - logging off.');
+            Exit;
+          End;
+        Name := CurMenu.Fallback;
+      End Else B := True;
+  Until B Or (HungUpon);
+
+  Load_Global;
+  Load_Menu_Keys;
+  Check_AutoRun;
+  Check_Menu_Dat;
+
+  Repeat
+    Check_AutoRunAll;
+
+    if (TimeTillEvent <= 5) Or (TimeTillNet <= 5)
+      then begin
+        if exist(cfg.textfiledir + 'EVENT.NOW')
+          then printfile(cfg.textfiledir + 'EVENT.NOW')
+          else writeln(^M^M^R^A+'A timed event is about to take place.  '+
+                      +'Call back later.');
+          forcehangup := true;
+          exit;
+      end;
+
+    if (timeleft < 1) and (issysop = false) then
+      begin
+        if exist(cfg.textfiledir + 'TIMESUP.ANS')
+          then printfile(cfg.textfiledir + 'TIMESUP.ANS')
+          else writeln(^G^R'Times up, call back later!');
+        forcehangup := true;
+        exit
+      end;
+
+    Prompt_User;
+    I := 0;
+    If Not Check_Global Then
+      Repeat
+        I := Find_Input(i + 1);
+        IF I > 0 Then Do_Command(i,false) ELSE
+        If (I = 0) And (Inpt = '?')
+          THEN PrintFile(Cfg.TextFileDir + CurMenu.HelpMenu);
+      Until (I < 1) Or (HungUpOn);
+    If HungUpOn Then Exit;
+  Until 0 = 1;
+
+End;
+
+begin
+end.

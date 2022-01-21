@@ -1,0 +1,110 @@
+Unit Modem;
+
+Interface
+
+Uses Crt, ConfigRt, APMisc, APCom, APUart, APPort;
+
+Procedure SetParam (ComPort:Integer; BaudRate:Longint; Parity:Boolean);
+Procedure OpenPort (ComPort:Integer; BaudRate:LongInt; Parity:Boolean);
+Procedure ClosePort;
+Function NumChars : Integer;
+Procedure DontAnswer;
+Procedure DoAnswer;
+Procedure SendChar(K:Char);
+Function GetChar : Char;
+Function Ring : Boolean;
+Function Carrier : Boolean;
+Procedure HangUp;
+Procedure NukeInput;
+Procedure NukeOutput;
+
+Var P : PortRecPtr;
+
+Implementation
+
+Procedure SetParam (ComPort:Integer; BaudRate:Longint; Parity:Boolean);
+Begin
+  ChangeBaud (P,BaudRate);
+End;
+
+Procedure OpenPort (Comport:Integer; BaudRate:Longint; Parity:Boolean);
+Begin
+  InitPort (P,ComNameType(Comport - 1),BaudRate,
+            NoParity,8,1,Cfg.InBuffer,Cfg.OutBuffer,DefPortOptions);
+  if AsyncStatus <> ecOk then begin
+    WriteLn(^M'Failed to open port: ', AsyncStatus);
+    Delay(1000);
+  end;
+End;
+
+Procedure ClosePort;
+Begin
+  DeactivatePort(P,False);
+End;
+
+Function Numchars : Integer;
+Begin
+  Numchars := Ord(CharReady(P));
+End;
+
+Procedure DontAnswer;
+Begin
+  SetDtr(P,False);
+End;
+
+Procedure DoAnswer;
+Begin
+  SetDtr(P,True);
+End;
+
+Procedure SendChar(K:Char);
+Begin
+  While Not TransReady(P) Do Begin
+    If Not Carrier Then Exit;
+  End;
+  PutChar(P,K);
+End;
+
+Function GetChar : Char;
+Var K : Char;
+Begin
+  ApPort.GetChar(P,K);
+  GetChar := K;
+End;
+
+Function Ring : Boolean; {this fucking thing DOESN'T WORK}
+Var Status : Byte;
+Begin
+  Status := GetModemStatus(P);
+  Ring := (Status And 64) = 64;
+End;
+
+Function Carrier : Boolean;
+Begin
+  Carrier := CheckDCD(P);
+End;
+
+Procedure NukeInput;
+Begin
+  FlushInBuffer(P);
+End;
+
+Procedure NukeOutPut;
+Begin
+  FlushOutBuffer(P);
+End;
+
+Procedure HangUp;
+Begin
+  If Not Carrier
+    Then Exit;
+  SetDTR(P,False);
+  Delay(1500);
+  SetDTR(P,True);
+  If Carrier
+    Then PutString(P,'+++');
+  DeActivatePort(P,False);
+End;
+
+Begin
+End.
