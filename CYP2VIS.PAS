@@ -4,7 +4,6 @@ Program Cyper_2_ViSiON;
 
 Uses Dos,Crt,ConfigRt,GenTypes;
 
-Begin `
 Type
      MsgArray  = Array [1..MaxMessageSize] of Lstr;
      VoteArry  = Array [1..10] of Byte;

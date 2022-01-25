@@ -349,7 +349,7 @@ end;
     ShowBBS('Theft of Services           (Home)  ','505-622-6804');
     Writeln(Usr);
     ShowBBS('Wasted Image                (Beta)  ','409-839-4525');
-    ShowBBS('Electronic Frontier         (Beta)  ','913-537-3680');
+    ShowBBS('The Paranormal Shop         (Beta)  ','514-747-7560');
     Writeln(Usr);
     EnsureClosed;
     Halt(4)

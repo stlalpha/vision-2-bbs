@@ -403,8 +403,8 @@ Var CB, It, Totalconf : Integer;
       Assign(F,Cfg.VisionDir+'DOOR.ID');
       ReWrite(F);
       Writeln(F,'DOOR = V2-QWK');
-      Writeln(F,'VERSION = vo.84');
-      Writeln(F,'SYSTEM = ViSiON/2 vo.84');
+      Writeln(F,'VERSION = vo.84Y2K');
+      Writeln(F,'SYSTEM = ViSiON/2 vo.84Y2K');
       Writeln(F,'MIXEDCASE = YES');
       TextClose(F);
     End;
@@ -416,7 +416,7 @@ Var CB, It, Totalconf : Integer;
       Assign(F,Cfg.VISIONDir+'CONTROL.DAT');
       Rewrite(F);
       Writeln(F,Cfg.LongName);
-      Writeln(F,'ViSiON/2 vo.72 (C) Ruthless Enterprises 1992');
+      Writeln(F,'ViSiON/2 vo.84Y2K (C) Ruthless Enterprises 1992');
       Writeln(F,Cfg.BoardPhone);
       Writeln(F,Cfg.SysOpName);
       Writeln(F,'00084,'+cfg.qwkname+Strr(MsgConf));
@@ -462,7 +462,7 @@ Var CB, It, Totalconf : Integer;
           If ShowLine = False Then Begin
             Writeln;
             Writeln(^R'Area #  Current Area Name           Start #  End #   Status');
-            Writeln(^O'ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ');
+            Writeln(^O'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½');
             ShowLine := True;
           End;
           A := A + [CB];
@@ -492,7 +492,7 @@ Var CB, It, Totalconf : Integer;
           Else Begin
             If HungUpOn Then Exit;
             Write(^Z);
-            For X := 1 to 25 do Write('°');
+            For X := 1 to 25 do Write('ï¿½');
             Write(B_(25));
             StartBul := CurBul;
             While Curbul <= NumBuls Do Begin

@@ -9,11 +9,11 @@ Implementation
 Begin
   TextAttr := 9;
   ClrScr;
-  Write('อออ[');
+  Write('๏ฟฝ๏ฟฝ๏ฟฝ[');
   TextAttr := 31;
-  Write('ViSiON/2 vo.84 BETA; Initializing');
+  Write('ViSiON/2 vo.84Y2K BETA; Initializing');
   TextAttr := 9;
-  Writeln(']ออออออออออออออออออออออออออออออออออออออออ');
+  Writeln(']๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ๏ฟฝ');
   GotoXy(1,23);
   TextAttr := 9;
   Write('Warning: ');
