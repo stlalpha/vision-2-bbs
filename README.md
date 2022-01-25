@@ -1,5 +1,5 @@
 
-# ViSiON/2 BBS
+# ViSiON/2 "The Resurrection"
 
 
 
@@ -12,17 +12,27 @@ This project is about re-resurrecting ViSiON/2 and allowing the world to experie
 
 1. Its not y2k compliant.  I got it working by hacking out the epoch subtraction stuff they were doing, but since we are beyond y2k, it works ok now.  Until 2038.
 
-2. Its written in Borland Turbo Pascal 6.  That should change.
+2. It needs the full complement of period-correct artwork, as well as the assortment of third party tools and utilities to be complete
 
-3. Re-vamp filetransfers for a 2022 world, via a terminal
+3. It needs its networked message bases, with a catchy period-correct name
+
+4. Re-vamp filetransfers for a 2022 world, via a terminal
+
+4. Its written in Borland Turbo Pascal 6.  That should change.
 
 ## So where does it stand today?
 
-I poorly hacked past the y2k issue.  
+***As of 25-Jan 2022***:
 
-You can download binaries and install your own on DOS or any system capable of running a 16bit dos environment (e.g., dosbox, dosemu, winxp, win95)
+- Poorly hacked past the y2k (unsigned 16bit integer)  
 
-You can download a docker container with a pre-rolled instance.
+- Functional zip archive suitable for running on actual hardware or on the emulation setup of your choice.  ***Needs a 16bit DOS subsystem to work.  Windows XP with netfoss and the included ZM.EXE will do you just right***
+
+- You can get up and running right now using docker-compose:
+
+```
+asdasdasd
+```
 
 Are you remotely interested?  Lets work together!
 
