@@ -6,7 +6,25 @@
 
 ![V2 Logo](images/welcome.png)
 
+## So what would you say you are doing around here?
 
+This project is about re-resurrecting ViSiON/2 and allowing the world to experience the software themselves, and to expand and improve its capabilities.  
+
+1. Its not y2k compliant.  I got it working by hacking out the epoch subtraction stuff they were doing, but since we are beyond y2k, it works ok now.  Until 2038.
+
+2. Its written in Borland Turbo Pascal 6.  That should change.
+
+3. Re-vamp filetransfers for a 2022 world, via a terminal
+
+## So where does it stand today?
+
+I poorly hacked past the y2k issue.  
+
+You can download binaries and install your own on DOS or any system capable of running a 16bit dos environment (e.g., dosbox, dosemu, winxp, win95)
+
+You can download a docker container with a pre-rolled instance.
+
+Are you remotely interested?  Lets work together!
 
 
 ## Social capital in the early digital world
@@ -41,7 +59,7 @@ So...
 
 **[** FORUM **]** -> **[** LSD **]** -> **[** ViSiON **]**
 
-ViSiON was written by Crimsom Blade and The Elemental.
+ViSiON was written by Crimson Blade and The Elemental.
 
 ViSiON/2 appears to be loosely derived from the ViSiON code, and was written by Crimson Blade circa 1992-1993.
 
@@ -52,6 +70,8 @@ So ViSiON/2's lineage...
 ViSiON/2 was beautiful out of the box, insanely configurable and ultimately grew to include the ability to completely emulate any other BBS you could think of via its completely user scriptable workflow and display setup.
 
 ViSiON/2 was my absolute favorite of all the hundreds of bbs programs I played with, and was the only one what I ever worked on.
+
+![V2 FSEd](images/stringeditor.png)
 
 ## I Must Be Getting Old
 I spent an enormous amount of time in this world, it was my primary social outlet in the late 80s and early 90s.
@@ -68,10 +88,14 @@ We were friends, we spent an enormous amount of time on the phone and on party l
 
 It was amazing.
 
+## So what would you say you are doing around here?
 
-## I Must Be Getting Old
-I spent an enormous amount of time in this world, it was my primary social outlet in the late 80s and early 90s.
+This project is about re-resurrecting ViSiON/2 and allowing the world to experience the software themselves.  It would make me really happy if just one other person somewhere setup a copy.  It would be amazing if we could get it re-vitalized as a way to share ideas, thoughts and experiences.  
 
-I was the proud sysop of multiple bbs's over the years, and I was a bbs program geek.  I loved the software, configuring it, getting it to do what i wanted to do - as much or more than I did pretty much any other aspect of the BBS world itself.
+So yeah - what's the work then?
 
-If you want to learn more about that time period and this sub-culture, check out the [BBS Documentary](https://www.youtube.com/watch?v=Dddbe9OuJLU&list=PL7nj3G6Jpv2G6Gp6NvN1kUtQuW8QshBWE).  Its companion website also has a 
+1. Its not y2k compliant.  I got it working by hacking out the epoch subtraction stuff they were doing, but since we are beyond y2k, it works ok now.  Until 2038 :frown:
+
+## The More You Know
+
+If you want to learn more about that time period and this sub-culture, check out the [BBS Documentary](https://www.youtube.com/watch?v=Dddbe9OuJLU&list=PL7nj3G6Jpv2G6Gp6NvN1kUtQuW8QshBWE).  Its companion website also has an enormous about of information and [source code](http://software.bbsdocumentary.com/IBM/DOS/FORUM/)!
