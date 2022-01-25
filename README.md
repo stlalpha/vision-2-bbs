@@ -3,8 +3,7 @@
 
 
 
-
-![V2 Logo](images/welcome.png)
+![V2 Logo](https://github.com/stlalpha/vision-2-bbs/blob/main/IMAGES/welcome.png?raw=true)
 
 ## So what would you say you are doing around here?
 
