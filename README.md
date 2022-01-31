@@ -133,25 +133,17 @@ ViSiON/2 was my absolute favorite of all the hundreds of bbs programs I played w
 ## I Must Be Getting Old
 I spent an enormous amount of time in this world, it was my primary social outlet in the late 80s and early 90s.
 
-I was the proud sysop of multiple bbs's over the years, and I was a dedicated bbs program geek.  I loved the software, configuring it, getting it to do what i wanted to do - as much or more than I did pretty much any other aspect of the BBS world itself.
+I was the  sysop of multiple bbs's over the years, and I was a dedicated bbs program geek.  I loved the software, configuring it, getting it to do what i wanted to do - as much or more than I did pretty much any other aspect of the BBS world itself.
 
 I was 14 or 15.  Intensely introverted, and interested in technology and the telephone (and tymnet and telenet and arpanet and yes later the internet).  It was super uncool to be this person at that time, but it was my driving passion.
 
 I got to know Crimson Blade at some point in 91 or 92.  I ended up being a ViSiON/2 sysop and provided a ton of feedback - solicited and unsolicited - to Crim as his friends called him.  
 
-We were kids, working together on a software project, servicing users all over the country, in a pre-internet world.  
+We were kids, working together on a software project, servicing users all over the country, in a mostly pre-internet world.  
 
-We were friends, we spent an enormous amount of time on the phone and on party lines when someone had one.  There would a few of us that worked on and helped with the ViSiON/2.  And we sort of found our way through it.  No one wrote the software but Crim, but we helped with features, ideas, bugs, screens, etc.
+We were friends, we spent an enormous amount of time on the phone and on party lines when someone had one.  There would a few of us that worked on and helped with ViSiON/2.  And we sort of found our way through it.  No one wrote the software but Crim and later ND, but we helped with features, ideas, bugs, screens, etc.
 
 It was amazing.
-
-## So what would you say you are doing around here?
-
-This project is about re-resurrecting ViSiON/2 and allowing the world to experience the software themselves.  It would make me really happy if just one other person somewhere setup a copy.  It would be amazing if we could get it re-vitalized as a way to share ideas, thoughts and experiences.  
-
-So yeah - what's the work then?
-
-1. Its not y2k compliant.  I got it working by hacking out the epoch subtraction stuff they were doing, but since we are beyond y2k, it works ok now.  Until 2038 :frown:
 
 ## The More You Know
 
