@@ -2,7 +2,6 @@
 # ViSiON/2 "The Resurrection"
 
 
-
 ![V2 Logo](https://github.com/stlalpha/vision-2-bbs/blob/main/IMAGES/welcome.png?raw=true)
 
 ## So what would you say you are doing around here?
@@ -18,6 +17,10 @@ This project is about re-resurrecting ViSiON/2 and allowing the world to experie
 4. Re-vamp filetransfers for a 2022 world, via a terminal
 
 5. Its written in Turbo Pascal 6.  That should change.
+
+## Releases ##
+
+
 
 
 ## Do You Need Any Help With This?
