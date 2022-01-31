@@ -9,15 +9,18 @@
 
 This project is about re-resurrecting ViSiON/2 and allowing the world to experience the software themselves, and to expand and improve its capabilities.  
 
-1. Its not y2k compliant.  I got it working by hacking out the epoch subtraction stuff they were doing, but since we are beyond y2k, it works ok now.  Until 2038.
+1. Its now sort ofy2k compliant until 2038.
 
-2. It needs the full complement of period-correct artwork, as well as the assortment of third party tools and utilities to be complete
+2. It needs the full complement of early 90s period-correct artwork, as well as the assortment of third party tools and utilities to be complete
 
 3. It needs its networked message bases, with a catchy period-correct name
 
 4. Re-vamp filetransfers for a 2022 world, via a terminal
 
-4. Its written in Borland Turbo Pascal 6.  That should change.
+5. Its written in Turbo Pascal 6.  That should change.
+
+***Pull requests eagerly accepted***
+
 
 ## So where does it stand today?
 
