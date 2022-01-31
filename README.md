@@ -29,8 +29,53 @@ This project is about re-resurrecting ViSiON/2 and allowing the world to experie
 
 - You can get up and running right now using docker-compose:
 
+This provides the full ViSiON/2 R1.0 setup in Drive G:
+
+# Install and Run (docker)
+
+You can install with:
+
+    docker pull stlalpha/vision2bbsres
+
+And run with:
+
+    docker run -d -p 5901:5901 -p 23:23 --name bbs-v2 stlalpha/vision2bbsres
+
+
+# Install and Run (docker-compose)
+
+Save the following docker-compose.yml:
 ```
-asdasdasd
+
+  ---
+  version: "2.1"
+  services:
+   ViSiON-2:
+     image: vision2bbsres
+    container_name: bbs-v2
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - VNCPASSWORD=muhbbspassword
+    ports:
+      - '23:23'
+      - '5901:5901'
+    restart: unless-stopped
+```
+And then...
+```
+bash$ docker-compose up -d
+```
+
+# Accessing and general commands
+
+The image runs a VNC console on port 5901/tcp.  You can connect to this console with any VNC client, on the mac you can use "Screen Sharing" and point it at hostname:5901. 
+
+By default, each invocation will generate a new VNC password.  To retrieve the current password, execute:
+
+```
+$ docker logs bbs-v2|grep password
 ```
 
 Are you remotely interested?  Lets work together!
@@ -41,7 +86,7 @@ As the BBS scene exploded throughout the 80s and 90s, there were hundreds (thous
 
 They tended to be built by hobbyists who had a particular community they were looking to service.  Some of these programs were more tuned for message bases, some online games, but the most visually appealing (and in my opion, the most generally interesting) always were the ones that supported the underground scene (and later the art scene as it became more prominent and sophisticated).  They were generically known as "forum hacks", as they generally shared either a common ancestral source-code from another bbs [software](http://software.bbsdocumentary.com/IBM/DOS/FORUM/).
 
-![V2 main stats](images/mainstats.png)
+![V2 main stats](https://github.com/stlalpha/vision-2-bbs/blob/main/IMAGES/mainstats.png?raw=true)
 
 The bulletin boards that ran these programs generally were prominent in the underground scene.  They tended to have multiple dial-up lines (internet access wasnt a thing most people had access to in the early 90s, and you wouldnt likely recognize it today even if you did), larger storage (measured in single-digit gigabytes), and typically didn't allow callers from their home area code.  
 
@@ -50,7 +95,7 @@ You generally had to know someone to get an account on these boards (some had a 
 
 You didn't use your real name on these boards, you used a handle, and as we were mostly teenagers and young adults, and mostly male, you can imagine the colorful assortment of names that showed up. 
 
-![V2 credits](images/credits.png)
+![V2 credits](https://github.com/stlalpha/vision-2-bbs/blob/main/IMAGES/credits.png?raw=true)
 
 If it was harder to get, more elusive or exclusive, it was viewed to have a higher value.  If you didn't know somone, you weren't going to run one of these.  Even if you did know someone, some of them limited the number of copies that could run in an area code. 
 
@@ -80,7 +125,7 @@ ViSiON/2 was beautiful out of the box, insanely configurable and ultimately grew
 
 ViSiON/2 was my absolute favorite of all the hundreds of bbs programs I played with, and was the only one what I ever worked on.
 
-![V2 FSEd](images/stringeditor.png)
+![V2 FSEd](https://github.com/stlalpha/vision-2-bbs/blob/main/IMAGES/stringeditor.png?raw=true)
 
 ## I Must Be Getting Old
 I spent an enormous amount of time in this world, it was my primary social outlet in the late 80s and early 90s.
