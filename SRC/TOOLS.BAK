@@ -1027,13 +1027,7 @@ var
 begin
    reg.ax := $2a00;
    msdos(reg);
-(*   system_yy := strval(reg.cx-1900);
-
-y2kish -stlalpha
-
-*)
-  system_yy := strval(reg.cx);
-
+   system_yy := strval(reg.cx-1900);
 end;
 
 function system_date: string8;   {format: mm-dd-yy}

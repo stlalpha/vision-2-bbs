@@ -170,12 +170,10 @@ function datestr (time:longint):sstr;
 var dt:datetime;
 begin
   unpacktime (time,dt);
-{  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year-1900) }
-{  its calling GetTime from the DOS unit, which is pulling system time }
-{   if the underlying windows is y2k compliant, you dont need to subtract }
-{   1900 anymore.  Yay time.  -felonius 11-Jan 2022 }
-
-   datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
+(*  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year-1900)
+ y2k? errr -stlalpha
+ *)
+  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
 end;
 
 Function Timepart (Time:Longint) : Longint;
@@ -219,7 +217,10 @@ var dt:datetime;
 begin
   cleardatetime (dt);
   Parse3 (q,dt.month,dt.day,dt.year);
-  If Dt.Year < 100 Then Dt.Year := Dt.Year+1900;
+(*  If Dt.Year < 100 Then Dt.Year := Dt.Year+1900;
+moar y2k -stlalpha
+*)
+  If Dt.Year < 100 Then Dt.Year := Dt.Year;
   dateval:=datepart(packtime(dt))
 end;
 

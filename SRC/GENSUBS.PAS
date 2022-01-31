@@ -218,9 +218,11 @@ function datestr (time:longint):sstr;
 var dt:datetime;
 begin
   unpacktime (time,dt);
-{  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year) }
-{  dont need to do this - et voila y2k -felonius 11-Jan 2022  }
-   datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
+(*  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year-1900)
+
+y2k -stlalpha
+*)
+  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
 end;
 
 Function TDateStr(time:Longint):Sstr;
@@ -237,9 +239,7 @@ Begin
     B:='0'; B:=B+Strr(Dt.Day)
   End;
   S:=S+'/'+B;
-{  B:=Strr(Dt.Year-1900); }
-{  more y2k wheee  -felonius 11-Jan 2022 }
-   B:=Strr(Dt.Year);
+  B:=Strr(Dt.Year-1900);
   S:=S+'/'+B;
   TDateStr:=S;
 End;

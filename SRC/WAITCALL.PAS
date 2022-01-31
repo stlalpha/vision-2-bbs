@@ -319,15 +319,15 @@ end;
     Procedure ShowBBS(S,P : Lstr);
     Begin
       TextAttr := 8;
-      Write(usr,'           ï¿½ ');
+      Write(usr,'           þ ');
       TextAttr := 15;
       Write(usr,S);
       TextAttr := 8;
-      Write(Usr,' ï¿½ ');
+      Write(Usr,' þ ');
       TextAttr := 3;
       Write(Usr,P);
       TextAttr := 8;
-      Writeln(Usr,' ï¿½');
+      Writeln(Usr,' þ');
     End;
 
   begin
@@ -337,15 +337,14 @@ end;
     window (1,1,80,25);
     TextAttr:=8;
     For X := 1 to 79
-      Do Write(Usr,'ï¿½');
+      Do Write(Usr,'Ä');
     TextAttr := 15;
-    Writeln(usr,'                    ViSiON/2 vo.84Y2k Bulletin Board Software');
+    Writeln(usr,'                    ViSiON/2 vo.84A Bulletin Board Software');
     Writeln(usr,'                        (C) Ruthless Enterprises 1993');
     Writeln(Usr,'                         Programmed by Crimson Blade');
-    Writeln(Usr,'                      Craptacular hacking by stlalpha (c) 2022');
     TextAttr := 8;
     For X := 1 to 79
-      Do Write(Usr,'ï¿½');
+      Do Write(Usr,'Ä');
     Writeln(Usr,#13#10#10);
     ShowBBS('Theft of Services           (Home)  ','505-622-6804');
     Writeln(Usr);
@@ -413,7 +412,7 @@ end;
         i:byte;
     Begin
       S:='                                                                               '+
-         'ViSiON/2 ver. o.84Y2K - Waiting For Call - [F1] Menu [F2] Exit [F3] Redraw Screen '+
+         'ViSiON/2 ver. o.70 - Waiting For Call - [F1] Menu [F2] Exit [F3] Redraw Screen '+
          '                                                                               ';
 {      If (SaveScreen) and (SL in [1,40,80,120]) Then Begin
         If SaveStatus then Begin
@@ -429,7 +428,7 @@ end;
         End;
           Textattr:=i;
           GotoXy(15,1);
-          Writeln(usr,'ViSiON/2 "The Revision" (C) Ruthless Enterprises 1992');
+          Writeln(usr,'ViSiON/2 "The Revision" (C) Ruthless Enterpriese 1992');
           GotoXy(15,2);
           Writeln(usr,'        Waiting For Caller; Screen Saver: ON');
       End;
@@ -845,7 +844,7 @@ end;
           Big^[TOTAL][0] := #0;
           INC(TOTAL);
         END;
-        Q := 'ï¿½ï¿½ï¿½ ' + Q + ' on ' + DateSTR(L.When) + ' at ' + TimeSTR(L.When)
+        Q := 'úÄÄ ' + Q + ' on ' + DateSTR(L.When) + ' at ' + TimeSTR(L.When)
       END
       ELSE
         Q := #32#32#32#32 + TimeStr(L.WHEN) + ': ' + Q;
@@ -904,7 +903,7 @@ end;
       GotoXY(1,25);
       TEXTATTR := 48;
       ClrEOL;
-      Write(USR,' Log Viewer ï¿½ Up/Dn/PgUp/PgDn Moves ï¿½ ESC Exits Viewer ï¿½ ');
+      Write(USR,' Log Viewer ³ Up/Dn/PgUp/PgDn Moves ³ ESC Exits Viewer ³ ');
     End;
 
     Procedure Draw_Some (Current:Word);
@@ -916,7 +915,7 @@ end;
       GotoXy(1,3);
       For X := START TO FINISH DO BEGIN
         IF X <= TOTAL THEN BEGIN
-          If POS('ï¿½ï¿½ï¿½',Big^[x]) = 1
+          If POS('úÄÄ',Big^[x]) = 1
             THEN TextAttr := 30
             ELSE TextAttr := 31;
           Write(USR,Big^[x]);

@@ -170,7 +170,10 @@ function datestr (time:longint):sstr;
 var dt:datetime;
 begin
   unpacktime (time,dt);
-  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year-1900)
+(*  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year-1900)
+ y2k? errr -stlalpha
+ *)
+  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
 end;
 
 Function Timepart (Time:Longint) : Longint;

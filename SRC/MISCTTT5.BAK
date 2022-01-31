@@ -696,3 +696,4 @@ begin
     ClockB := black;
     LPTport := 0;  {LPT1}
 end.
+

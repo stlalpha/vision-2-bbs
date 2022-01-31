@@ -8,24 +8,24 @@ uses dos,MDosIO,gentypes;
 
 function strr (n:integer):mstr;
 function streal (r:real):mstr;
-function strlong (l:double):mstr;
+function strlong (l:longint):mstr;
 function valu (q:mstr):integer;
 function realvalu (q:mstr):real;
-function longvalu (q:mstr):double;
-function ratio(x1,x2:double):integer;
+function longvalu (q:mstr):longint;
+function ratio(x1,x2:longint):integer;
 function addrstr (p:pointer):sstr;
 procedure parse3 (s:lstr; var a,b,c:word);
-function packtime (var dt:datetime):double;
+function packtime (var dt:datetime):longint;
     { Replaces Turbo's procedural version }
-function now:double;
-function timestr (time:double):sstr;
-function TimeStr_24 (Time:double):Sstr;
-function timeval (q:sstr):double;
-function timepart (time:double):double;
-function datestr (time:double):sstr;
-function tdatestr(Time:double):sstr;
-function dateval (q:sstr):double;
-function datepart (time:double):double;
+function now:longint;
+function timestr (time:longint):sstr;
+function TimeStr_24 (Time:Longint):Sstr;
+function timeval (q:sstr):longint;
+function timepart (time:longint):longint;
+function datestr (time:longint):sstr;
+function tdatestr(Time:longint):sstr;
+function dateval (q:sstr):longint;
+function datepart (time:longint):longint;
 function upstring (s:anystr):anystr;
 function match (s1,s2:anystr):boolean;
 function devicename (name:lstr):boolean;
@@ -59,7 +59,7 @@ begin
   streal:=q
 end;
 
-function strlong (l:double):mstr;
+function strlong (l:longint):mstr;
 var q:mstr;
 begin
   str (l,q);
@@ -97,9 +97,9 @@ begin
     then realvalu:=r
 end;
 
-function longvalu (q:mstr):double;
+function longvalu (q:mstr):longint;
 var i,s,pu:integer;
-    r:double;
+    r:longint;
 begin
   longvalu:=0;
   if length(q)=0 then exit;
@@ -111,7 +111,7 @@ begin
     then longvalu:=r
 end;
 
-function ratio(x1,x2:double):integer;
+function ratio(x1,x2:longint):integer;
 var x3:integer;
     y1,y2,y3:real;
 Begin
@@ -167,17 +167,17 @@ begin
   parse1 (c)
 end;
 
-function packtime (var dt:datetime):double;
-var l:double;
+function packtime (var dt:datetime):longint;
+var l:longint;
 begin
   dos.packtime (dt,l);
   packtime:=l
 end;
 
-function now:double;
+function now:longint;
 var dt:datetime;
     t:word;
-    l:double;
+    l:longint;
 begin
   gettime (dt.hour,dt.min,dt.sec,t);
   getdate (dt.year,dt.month,dt.day,t);
@@ -185,7 +185,7 @@ begin
   now:=l
 end;
 
-function timestr (time:double):sstr;
+function timestr (time:longint):sstr;
 var h1:integer;
     ms:sstr;
     dt:datetime;
@@ -202,7 +202,7 @@ begin
   timestr:=strr(h1)+':'+ms+' '+ampmstr[dt.hour>11]
 end;
 
-function TimeStr_24(Time:double):Sstr;
+function TimeStr_24(Time:Longint):Sstr;
 VAR DT:DateTime; h1:integer; m,ms:sstr;
 Begin
   Unpacktime(time,dt); ms[0]:=Chr(0);
@@ -214,16 +214,18 @@ Begin
   TimeStr_24:=Ms+M;
 End;
 
-function datestr (time:double):sstr;
+function datestr (time:longint):sstr;
 var dt:datetime;
 begin
   unpacktime (time,dt);
-{  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year) }
-{  dont need to do this - et voila y2k -felonius 11-Jan 2022  }
-   datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
+(*  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year-1900)
+
+y2k -stlalpha
+*)
+  datestr:=strr(dt.month)+'/'+strr(dt.day)+'/'+strr(dt.year)
 end;
 
-Function TDateStr(time:double):Sstr;
+Function TDateStr(time:Longint):Sstr;
 Var Dt:DateTime; B,S:Sstr;
 Begin
   Unpacktime(time,dt);
@@ -237,19 +239,17 @@ Begin
     B:='0'; B:=B+Strr(Dt.Day)
   End;
   S:=S+'/'+B;
-{  B:=Strr(Dt.Year-1900); }
-{  more y2k wheee  -felonius 11-Jan 2022 }
-   B:=Strr(Dt.Year);
+  B:=Strr(Dt.Year-1900);
   S:=S+'/'+B;
   TDateStr:=S;
 End;
 
-function timepart (time:double):double;
+function timepart (time:longint):longint;
 begin
   timepart:=time and $0000ffff;
 end;
 
-function datepart (time:double):double;
+function datepart (time:longint):longint;
 begin
   datepart:=time and $ffff0000;
 end;
@@ -259,7 +259,7 @@ begin
   unpacktime (0,dt)
 end;
 
-function timeval (q:sstr):double;
+function timeval (q:sstr):longint;
 var h1,t:word;
     k:char;
     dt:datetime;
@@ -281,7 +281,7 @@ begin
   { timeval:=timepart(packtime(dt)) }
 end;
 
-function dateval (q:sstr):double;
+function dateval (q:sstr):longint;
 var dt:datetime;
 begin
   cleardatetime (dt);

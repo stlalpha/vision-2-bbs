@@ -6,8 +6,8 @@ Interface
 
 Uses Dos;
 
-Const Versionnum = '0.84Y2K';
-      Version = 'ViSiON/2 vo.84Y2K BETA - Sub-Version: A';
+Const Versionnum = '0.84';
+      Version = 'ViSiON/2 vo.84 BETA - Sub-Version: A';
       ThisVersionCode = 69;
       MaxUsers = 30000;
       MaxMessageSize = 100;
@@ -548,8 +548,8 @@ Const BaudArray : Array [b300..b115200] of Longint =
 
       FilesInBatch : Byte = 0;
 
-      RegSysOp  : Mstr = 'ï¿½';
-      RegBBS    : Lstr = 'ï¿½';
+      RegSysOp  : Mstr = 'þ';
+      RegBBS    : Lstr = 'ú';
 
 Var   ConnectStr : Anystr;
       BatchDown  : ^BatchList;
