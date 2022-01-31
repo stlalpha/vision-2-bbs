@@ -98,7 +98,7 @@ They tended to be built by hobbyists who had a particular community they were lo
 
 ![V2 main stats](https://github.com/stlalpha/vision-2-bbs/blob/main/IMAGES/mainstats.png?raw=true)
 
-The bulletin boards that ran these programs generally were prominent in the underground scene.  They tended to have multiple dial-up lines (internet access wasnt a thing most people had access to in the early 90s, and you wouldnt likely recognize it today even if you did), larger storage (measured in single-digit gigabytes), and typically didn't allow callers from their home area code.  
+The bulletin boards that ran these programs were generally prominent or they had managed to pay the registration fee.  They tended to have multiple dial-up lines (internet access wasnt a thing most people had access to in the early 90s, and you wouldnt likely recognize it today even if you did), larger storage (measured in single-digit gigabytes), and typically didn't allow callers from their home area code.  
 
 
 You generally had to know someone to get an account on these boards (some had a process where the existing users would view your application and decide themselves), some required you to upload sample files to show your worth.
@@ -109,7 +109,7 @@ You didn't use your real name on these boards, you used a handle, and as we were
 
 If it was harder to get, more elusive or exclusive, it was viewed to have a higher value.  If you didn't know somone, you weren't going to run one of these.  Even if you did know someone, some of them limited the number of copies that could run in an area code. 
 
-They had exlusive proprietary networked message boards.  You could post a message on one BBS, and if you called another bbs that was also in that network, your message would show up there as well and people there could respond to you.  The bbs's literally called each other and passed these messages back and forth.  Your network was cooler if it was harder to get in.   
+They had exlusive networked message boards, BLiTZNet, FelonyNet, CCI, etc.  You could post a message on one BBS, and if you called another bbs that was also in that network, your message would show up there as well and people there could respond to you.  The bbs's literally called each other and passed these messages back and forth.  Your network was cooler if it was harder to get in.   
 
 This exclusivity was generally referred to as "Elite" or "Eliteness".  Harder to get?  More elite.  Elite > lame.
 
@@ -148,7 +148,7 @@ I got to know Crimson Blade at some point in 91 or 92.  I ended up being a ViSiO
 
 We were kids, working together on a software project, servicing users all over the country, in a mostly pre-internet world.  
 
-We were friends, we spent an enormous amount of time on the phone and on party lines when someone had one.  
+We were friends, we spent an enormous amount of time on the phone and on party lines when someone had one, hanging out talking and working on V2.
 
 It was amazing.
 
