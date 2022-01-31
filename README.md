@@ -19,7 +19,7 @@ This project is about re-resurrecting ViSiON/2 and allowing the world to experie
 
 5. Its written in Turbo Pascal 6.  That should change.
 
-***Pull requests eagerly accepted***
+***Are you oddly interested in esoteric early 90s pre-internet bbs software - lets work together! mailto=stlalpha@vision2bbs.com ***
 
 
 ## So where does it stand today?
