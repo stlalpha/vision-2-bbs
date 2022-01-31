@@ -19,9 +19,13 @@ This project is about re-resurrecting ViSiON/2 and allowing the world to experie
 5. Its written in Turbo Pascal 6.  That should change.
 
 ## Releases ##
+Source and Binary .zip- zipfile can be unzipped and run on real hardware or emulators.
 
+Download the zipfile [here!](https://github.com/stlalpha/vision-2-bbs/releases)
 
-https://github.com/stlalpha/vision-2-bbs/releases
+***Do you docker?***
+
+Prefer a docker image? [Snag it here!](https://github.com/stlalpha/docker-bbs-vision2)
 
 ## Do You Need Any Help With This?
 Yes.  I need all the help.  Are you oddly interested in esoteric early 90s pre-internet bbs software and art?  Cool.  Contact me and let's work together.   [Contact me](mailto:stlalpha@vision2bbs.com) and lets work together.  Or don't and just send pull requests.  It'll be great either way.
