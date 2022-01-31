@@ -64,7 +64,7 @@ Save the following docker-compose.yml:
   version: "2.1"
   services:
    ViSiON-2:
-     image: vision2bbsres
+     image: stlalpha/vision2bbsres:latest
     container_name: bbs-v2
     environment:
       - PUID=1000
