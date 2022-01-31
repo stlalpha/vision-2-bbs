@@ -8,7 +8,7 @@
 
 This project is about re-resurrecting ViSiON/2 and allowing the world to experience the software themselves, and to expand and improve its capabilities.  
 
-1. Its now sort ofy2k compliant until 2038.
+1. Its now sort of y2k compliant until 2038.
 
 2. It needs the full complement of early 90s period-correct artwork, as well as the assortment of third party tools and utilities to be complete
 
@@ -29,6 +29,8 @@ Prefer a docker image? [Snag it here!](https://github.com/stlalpha/docker-bbs-vi
 
 ## Do You Need Any Help With This?
 Yes.  I need all the help.  Are you oddly interested in esoteric early 90s pre-internet bbs software and art?  Cool.  Contact me and let's work together.   [Contact me](mailto:stlalpha@vision2bbs.com) and lets work together.  Or don't and just send pull requests.  It'll be great either way.
+
+Wait - are you Crim? Where have you been? [Contact me](mailto:stlalpha@vision2bbs.com)!
 
 ## So where does it stand today?
 
@@ -107,11 +109,11 @@ You didn't use your real name on these boards, you used a handle, and as we were
 
 If it was harder to get, more elusive or exclusive, it was viewed to have a higher value.  If you didn't know somone, you weren't going to run one of these.  Even if you did know someone, some of them limited the number of copies that could run in an area code. 
 
-They had exlusive proprietary networked message boards.  You could post a message on one BBS, and if you called another bbs that was also in that network, your message would show up there as well and people there could respond to you.  The bbs's litearlly called each other and passed these messages back and forth.  Your network was cooler if it was harder to get in.   
+They had exlusive proprietary networked message boards.  You could post a message on one BBS, and if you called another bbs that was also in that network, your message would show up there as well and people there could respond to you.  The bbs's literally called each other and passed these messages back and forth.  Your network was cooler if it was harder to get in.   
 
 This exclusivity was generally referred to as "Elite" or "Eliteness".  Harder to get?  More elite.  Elite > lame.
 
-## ViSiON/2 - "Elite" Lineage
+## ViSiON/2 - Lineage
 
 Source code tended to get out into the wild.  Forum hacks were primarily Pascal affairs, used [Turbo Technojock's](https://www.pcorner.com/list/PASCAL/TTT501-1.ZIP/INFO/) toolkit and a smorgasbord of copy pasta from all sorts of places.  Forum hacks proliferated and their growth seemed to accelerate once the ViSiON .82 sourcecode was released which I believe was around mid 1992.  
 
@@ -123,7 +125,7 @@ So...
 
 ViSiON was written by Crimson Blade and The Elemental.
 
-ViSiON/2 appears to be loosely derived from the ViSiON code, and was written by Crimson Blade circa 1992-1993.
+ViSiON/2 appears to be derived from the ViSiON code, and was written by Crimson Blade circa 1991-1993.
 
 So ViSiON/2's lineage...
 
@@ -140,13 +142,13 @@ I spent an enormous amount of time in this world, it was my primary social outle
 
 I was the  sysop of multiple bbs's over the years, and I was a dedicated bbs program geek.  I loved the software, configuring it, getting it to do what i wanted to do - as much or more than I did pretty much any other aspect of the BBS world itself.
 
-I was 14 or 15.  Intensely introverted, and interested in technology and the telephone (and tymnet and telenet and arpanet and yes later the internet).  It was super uncool to be this person at that time, but it was my driving passion.
+I was 14 or 15, intensely introverted, and interested in technology and the telephone (and tymnet and telenet and arpanet and yes later the internet).  It was super uncool to be this person at that time, but it was my driving passion.
 
-I got to know Crimson Blade at some point in 91 or 92.  I ended up being a ViSiON/2 sysop and provided a ton of feedback - solicited and unsolicited - to Crim as his friends called him.  
+I got to know Crimson Blade at some point in 91 or 92.  I ended up being a ViSiON/2 sysop and provided a ton of feedback - solicited and unsolicited - to Crim and the other guys that pitched in.
 
 We were kids, working together on a software project, servicing users all over the country, in a mostly pre-internet world.  
 
-We were friends, we spent an enormous amount of time on the phone and on party lines when someone had one.  There would a few of us that worked on and helped with ViSiON/2.  And we sort of found our way through it.  No one wrote the software but Crim and later ND, but we helped with features, ideas, bugs, screens, etc.
+We were friends, we spent an enormous amount of time on the phone and on party lines when someone had one.  
 
 It was amazing.
 
