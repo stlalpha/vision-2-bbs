@@ -19,8 +19,9 @@ This project is about re-resurrecting ViSiON/2 and allowing the world to experie
 
 5. Its written in Turbo Pascal 6.  That should change.
 
-***Are you oddly interested in esoteric early 90s pre-internet bbs software - lets work together! <a mailto=stlalpha@vision2bbs.com>Shoot me a note</a> ***
 
+## Do You Need Any Help With This?
+Yes.  I need all the help.  Are you oddly interested in esoteric early 90s pre-internet bbs software and art?  Cool.  Contact me and let's work together.  [STLAlpha](mailto:stlalpha@vision2bbs.com?subject=[GitHub] ViSiON/2 BBS Source)
 
 ## So where does it stand today?
 
@@ -80,9 +81,6 @@ By default, each invocation will generate a new VNC password.  To retrieve the c
 ```
 $ docker logs bbs-v2|grep password
 ```
-
-Are you remotely interested?  Lets work together!
-
 
 ## Social capital in the early digital world
 As the BBS scene exploded throughout the 80s and 90s, there were hundreds (thousands?) of bbs programs created and released. This was pre-internet social media.  
