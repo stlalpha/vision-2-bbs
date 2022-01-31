@@ -28,7 +28,7 @@ Download the zipfile [here!](https://github.com/stlalpha/vision-2-bbs/releases)
 Prefer a docker image? [Snag it here!](https://github.com/stlalpha/docker-bbs-vision2)
 
 ## Do You Need Any Help With This?
-Yes.  I need all the help.  Are you oddly interested in esoteric early 90s pre-internet bbs software and art?  Cool.  Contact me and let's work together.   [Contact me](mailto:stlalpha@vision2bbs.com) and lets work together.  Or don't and just send pull requests.  It'll be great either way.
+Yes.  I need all the help.  Are you oddly interested in esoteric early 90s pre-internet bbs software and art?  Cool.  Reach out and let's work together.   [Contact me](mailto:stlalpha@vision2bbs.com) and lets sort it out.  Or don't and just send pull requests.  It'll be great either way.
 
 Wait - are you Crim? Where have you been? [Contact me](mailto:stlalpha@vision2bbs.com)!
 
